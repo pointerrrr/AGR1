@@ -10,22 +10,24 @@ using OpenTK.Input;
 
 namespace Template {
 
-class Game
-{
-	public Surface screen;
+	class Game
+	{
+		public Surface screen;
 
-	public void Init()
-	{
-		screen.Clear( 0xffffff );
+		public void Init()
+		{
+			screen.Clear( 0xffffff );
+		}
+
+		public void Tick()
+		{
+			screen.Print( "hello world!", 2, 2, 0xffffff );
+		}
+
+		public void Render()
+		{
+			// render stuff over the backbuffer (OpenGL, sprites)
+		}
 	}
-	public void Tick()
-	{
-		screen.Print( "hello world!", 2, 2, 0xffffff );
-	}
-	public void Render()
-	{
-		// render stuff over the backbuffer (OpenGL, sprites)
-	}
-}
 
 } // namespace Template
