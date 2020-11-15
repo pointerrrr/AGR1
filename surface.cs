@@ -6,7 +6,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
  
-namespace Template
+namespace template
 {
 	public class Sprite
 	{
@@ -73,6 +73,13 @@ namespace Template
 		{
 			for( int s = width * height, p = 0; p < s; p++ ) pixels[p] = c;
 		}
+
+		public void Pixel(int x, int y, int c)
+        {
+			int dest = y * width;
+			pixels[dest + x] = c;
+        }
+
 		public void Box( int x1, int y1, int x2, int y2, int c )
 		{
 			int dest = y1 * width;
