@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
 using System.Drawing;
+using static OpenTK.Vector3;
 
 namespace template
 {
@@ -28,20 +29,19 @@ namespace template
             {
                 for (int j = 0; j < 512; j++)
                 {
-                    result[i,j] = TraceRay(i, j);
+                    Ray ray = new Ray();
+                    ray.position = Camera.Position;
+
+                    ray.direction = new Vector3((i - 256f) / 512, (j - 256f) / 512f, Camera.Position.Z - 1) - Camera.Position;
+                    ray.direction.Normalize();
+                    result[i,j] = TraceRay(ray);
                 }
             }
             return result;
         }
 
-        private int TraceRay(int xCoordinate, int yCoordinate)
+        private int TraceRay(Ray ray)
         {
-            Ray ray = new Ray();
-            ray.position = Camera.Position;
-
-            ray.direction = new Vector3((xCoordinate - 256f) / 512, (yCoordinate - 256f) / 512f, Camera.Position.Z -1) - Camera.Position;
-            ray.direction.Normalize();
-
             Intersection nearest = new Intersection { length = float.PositiveInfinity };
 
             foreach (var primitive in Scene)
@@ -54,9 +54,20 @@ namespace template
             if (nearest.primitive == null)
                 return 0;
 
+            
+            if(nearest.primitive.Material.Reflectivity == 1)
+            {
+                Ray reflection = new Ray() { direction = reflectRay(ray.direction, nearest.normal), position = nearest.Position };
+                return TraceRay(reflection);
+            }
+
             return VecToInt(nearest.primitive.Material.color);
         }
         
+        private Vector3 reflectRay(Vector3 rayDirection, Vector3 normal)
+        {
+            return rayDirection - 2 * Dot(rayDirection, normal) * normal;
+        }
 
         private int VecToInt(Vector3 vector)
         {
@@ -70,7 +81,7 @@ namespace template
         {
             Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0) } });
             Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0) } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1) } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 1 } });
             Scene.Add(new Plane(new Vector3(0, -5, -12), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(0,1,1)} });
         }
     }
@@ -88,6 +99,8 @@ namespace template
     {
         public Ray ray;
         public Primitive primitive;
+        public Vector3 normal;
+        public Vector3 Position;
 
         public float length;
 

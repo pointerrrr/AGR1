@@ -52,6 +52,9 @@ namespace template
                 intersection.length = t;
                 intersection.primitive = this;
                 intersection.ray = ray;
+                intersection.Position = t * ray.direction + ray.position;
+                intersection.normal = Normalize(intersection.Position - Position);
+                
 
                 return intersection;
             }
@@ -94,9 +97,7 @@ namespace template
         public Vector3 Point1, Point2, Point3;
 
         public override Intersection Intersect(Ray ray)
-        {
-
-            
+        {       
             return null;
         }
     }
