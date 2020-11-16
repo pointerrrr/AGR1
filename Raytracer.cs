@@ -55,10 +55,10 @@ namespace template
                 return 0;
 
             
-            if(nearest.primitive.Material.Reflectivity == 1)
+            if(nearest.primitive.Material.Reflectivity != 0)
             {
                 Ray reflection = new Ray() { direction = reflectRay(ray.direction, nearest.normal), position = nearest.Position };
-                return TraceRay(reflection);
+                return (int)(VecToInt(nearest.primitive.Material.color) * (1 - nearest.primitive.Material.Reflectivity) + (TraceRay(reflection) * nearest.primitive.Material.Reflectivity));
             }
 
             return VecToInt(nearest.primitive.Material.color);
@@ -81,8 +81,8 @@ namespace template
         {
             Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0) } });
             Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0) } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 1 } });
-            Scene.Add(new Plane(new Vector3(0, -5, -12), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(0,1,1)} });
+            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0.8f } });
+            //Scene.Add(new Plane(new Vector3(0, -5, -12), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(0,1,1)} });
         }
     }
 
