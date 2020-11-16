@@ -13,24 +13,27 @@ namespace template {
 	class Game
 	{
 		public Surface screen;
+		Raytracer raytracer;
+		int[,] pixels;
 
 		public void Init()
 		{
 			screen.Clear( 0x000000 );
+			raytracer = new Raytracer();
 		}
 
 		public void Tick()
 		{
 			//screen.Print( "hello world!", 2, 2, 0xffffff );
 			// render stuff over the backbuffer (OpenGL, sprites)
-			var raytracer = new Raytracer();
-			var bitmap = raytracer.Trace();
+			
+			pixels = raytracer.Trace();
 
 			for (int i = 0; i < 512; i++)
 			{
 				for (int j = 0; j < 512; j++)
 				{
-					screen.Pixel(i, j, RGBToInt(bitmap.GetPixel(i, j)));				
+					screen.Pixel(i, j, pixels[i, j]);				
 				}
 			}
 		}
@@ -38,11 +41,6 @@ namespace template {
 		public void Render()
 		{
 			
-		}
-
-		private int RGBToInt(Color color)
-        {
-			return (color.R << 16) + (color.G << 8) + color.B;
 		}
 	}
 
