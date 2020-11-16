@@ -85,6 +85,7 @@ namespace template
                 intersection.primitive = this;
                 intersection.ray = ray;
                 intersection.normal = Normal;
+                intersection.Position = ray.position + ray.direction * t;
 
                 return intersection;
             }

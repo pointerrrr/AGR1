@@ -35,16 +35,16 @@ namespace template
 
                     ray.direction = new Vector3((i - 256f) / 512, (j - 256f) / 512f, Camera.Position.Z - 1) - Camera.Position;
                     ray.direction.Normalize();
-                    result[i,j] = TraceRay(ray);
+                    result[i,j] = VecToInt(TraceRay(ray));
                 }
             }
             return result;
         }
 
-        private int TraceRay(Ray ray, int recursionDepth = 0)
+        private Vector3 TraceRay(Ray ray, int recursionDepth = 0)
         {
             if (recursionDepth > 10)
-                return 0;
+                return new Vector3();
             Intersection nearest = new Intersection { length = float.PositiveInfinity };
 
             foreach (var primitive in Scene)
@@ -55,7 +55,7 @@ namespace template
             }
 
             if (nearest.primitive == null)
-                return 0;
+                return new Vector3();
 
             var illumination = new Vector3();
 
@@ -63,8 +63,9 @@ namespace template
             {
                 if (!castShadowRay(light, nearest.Position + Normalize(light.Position - nearest.Position) * 0.0001f))
                 {
-                    var attenuation = 1f / (light.Position - nearest.Position).Length;
-                    var nDotL = Dot(nearest.normal, light.Position - nearest.Position);
+                    var distance = (light.Position - nearest.Position).Length;
+                    var attenuation = 1f /  (distance * distance);
+                    var nDotL = Dot(nearest.normal, Normalize(light.Position - nearest.Position));
 
                     illumination += nDotL * attenuation * light.Color;
                 }
@@ -74,13 +75,14 @@ namespace template
             if (nearest.primitive.Material.Reflectivity != 0)
             {
                 var reflectionRay = Normalize(reflectRay(ray.direction, nearest.normal));
-                Ray reflection = new Ray() { direction = reflectionRay, position = nearest.Position - reflectionRay * 0.0001f };
-                return (int)(VecToInt(nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) ) + (TraceRay(reflection, ++recursionDepth) * nearest.primitive.Material.Reflectivity));
+                Ray reflection = new Ray() { direction = reflectionRay, position = nearest.Position + reflectionRay * 0.0001f };
+                return nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) //* illumination
+                    + (TraceRay(reflection, ++recursionDepth) * nearest.primitive.Material.Reflectivity);
             }
 
             
 
-            return VecToInt(nearest.primitive.Material.color * illumination);
+            return nearest.primitive.Material.color * illumination;
         }
 
         private bool castShadowRay(Light light, Vector3 position)
@@ -111,10 +113,10 @@ namespace template
         {
             Scene.Add(new Sphere(new Vector3(3, 0, -5), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(-3, 0, -5), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0.8f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 1f } });
 
             Lights.Add(new Light(new Vector3(), new Vector3(1, 1, 1)));
-            //Scene.Add(new Plane(new Vector3(0, -5, -20), new Vector3(0, 1f, 0)) { Material = new Material { color = new Vector3(0,1,1)} });
+            Scene.Add(new Plane(new Vector3(0, -5, -20), new Vector3(0, 1f, 0)) { Material = new Material { color = new Vector3(1000,1000,1000)} });
         }
     }
 
