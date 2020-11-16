@@ -13,6 +13,7 @@ namespace template
     {
         public Camera Camera;
         public List<Primitive> Scene = new List<Primitive>();
+        public List<Light> Lights = new List<Light>();
 
         public Raytracer()
         {
@@ -56,14 +57,41 @@ namespace template
             if (nearest.primitive == null)
                 return 0;
 
-            
-            if(nearest.primitive.Material.Reflectivity != 0)
+            var illumination = new Vector3();
+
+            foreach (var light in Lights)
             {
-                Ray reflection = new Ray() { direction = reflectRay(ray.direction, nearest.normal), position = nearest.Position + reflectRay(ray.direction, nearest.normal) * 0.01f };
-                return (int)(VecToInt(nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity)) + (TraceRay(reflection, ++recursionDepth) * nearest.primitive.Material.Reflectivity));
+                if (!castShadowRay(light, nearest.Position + Normalize(light.Position - nearest.Position) * 0.0001f))
+                {
+                    var attenuation = 1f / (light.Position - nearest.Position).Length;
+                    var nDotL = Dot(nearest.normal, light.Position - nearest.Position);
+
+                    illumination += nDotL * attenuation * light.Color;
+                }
+
             }
 
-            return VecToInt(nearest.primitive.Material.color);
+            if (nearest.primitive.Material.Reflectivity != 0)
+            {
+                var reflectionRay = Normalize(reflectRay(ray.direction, nearest.normal));
+                Ray reflection = new Ray() { direction = reflectionRay, position = nearest.Position - reflectionRay * 0.0001f };
+                return (int)(VecToInt(nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) ) + (TraceRay(reflection, ++recursionDepth) * nearest.primitive.Material.Reflectivity));
+            }
+
+            
+
+            return VecToInt(nearest.primitive.Material.color * illumination);
+        }
+
+        private bool castShadowRay(Light light, Vector3 position)
+        {
+            foreach (var primitive in Scene)
+            {
+                var intersection = primitive.Intersect(new Ray { position = position, direction = Normalize(position - light.Position) });
+                if (intersection != null)
+                    return false;
+            }
+            return true;
         }
         
         private Vector3 reflectRay(Vector3 rayDirection, Vector3 normal)
@@ -81,10 +109,12 @@ namespace template
 
         private void MakeScene()
         {
-            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = .5f } });
-            Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = .5f } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -15), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0.8f } });
-            //Scene.Add(new Plane(new Vector3(0, -5, -12), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(0,1,1)} });
+            Scene.Add(new Sphere(new Vector3(3, 0, -5), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(-3, 0, -5), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0.8f } });
+
+            Lights.Add(new Light(new Vector3(), new Vector3(1, 1, 1)));
+            //Scene.Add(new Plane(new Vector3(0, -5, -20), new Vector3(0, 1f, 0)) { Material = new Material { color = new Vector3(0,1,1)} });
         }
     }
 
@@ -116,7 +146,13 @@ namespace template
 
     public class Light
     {
-        public Vector3 color;
-        public Vector3 position;
+        public Vector3 Color;
+        public Vector3 Position;
+
+        public Light(Vector3 position, Vector3 color)
+        {
+            Position = position;
+            Color = color;
+        }
     }
 }

@@ -15,7 +15,6 @@ namespace template
         public Material Material;
 
         public abstract Intersection Intersect(Ray ray);
-
     }
 
     public class Sphere : Primitive
@@ -85,6 +84,7 @@ namespace template
                 intersection.length = t;
                 intersection.primitive = this;
                 intersection.ray = ray;
+                intersection.normal = Normal;
 
                 return intersection;
             }
