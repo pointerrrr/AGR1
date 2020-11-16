@@ -64,8 +64,27 @@ namespace template
         public Vector3 Position;
         public Vector3 Normal;
 
+        public Plane(Vector3 position, Vector3 normal)
+        {
+            Position = position;
+            Normal = normal;
+        }
+
         public override Intersection Intersect(Ray ray)
         {
+            float par = Dot(ray.direction, Normal);
+            float t = (Dot(Position - ray.position, Normal) * -1)  / par;
+
+            if(Math.Abs(par) > 0.0001f && t > 0)
+            {
+                var intersection = new Intersection();
+
+                intersection.length = t;
+                intersection.primitive = this;
+                intersection.ray = ray;
+
+                return intersection;
+            }
             return null;
         }
     }
@@ -76,6 +95,8 @@ namespace template
 
         public override Intersection Intersect(Ray ray)
         {
+
+            
             return null;
         }
     }
