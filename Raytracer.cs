@@ -67,6 +67,8 @@ namespace template
                     var attenuation = 1f /  (distance * distance);
                     var nDotL = Dot(nearest.normal, Normalize(light.Position - nearest.Position));
 
+                    if (nDotL < 0)
+                        continue;
                     illumination += nDotL * attenuation * light.Color;
                 }
 
@@ -76,7 +78,7 @@ namespace template
             {
                 var reflectionRay = Normalize(reflectRay(ray.direction, nearest.normal));
                 Ray reflection = new Ray() { direction = reflectionRay, position = nearest.Position + reflectionRay * 0.0001f };
-                return nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) //* illumination
+                return nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) * illumination
                     + (TraceRay(reflection, ++recursionDepth) * nearest.primitive.Material.Reflectivity);
             }
 
@@ -115,8 +117,10 @@ namespace template
             Scene.Add(new Sphere(new Vector3(-3, 0, -5), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 1f } });
 
-            Lights.Add(new Light(new Vector3(), new Vector3(1, 1, 1)));
-            Scene.Add(new Plane(new Vector3(0, -5, -20), new Vector3(0, 1f, 0)) { Material = new Material { color = new Vector3(1000,1000,1000)} });
+            
+            Scene.Add(new Plane(new Vector3(0, -1, -20), new Vector3(0, -1f, 0)) { Material = new Material { color = new Vector3(1,1,1)} });
+
+            Lights.Add(new Light(new Vector3(0,0,0), new Vector3(10, 10, 10)));
         }
     }
 
