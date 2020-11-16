@@ -40,8 +40,10 @@ namespace template
             return result;
         }
 
-        private int TraceRay(Ray ray)
+        private int TraceRay(Ray ray, int recursionDepth = 0)
         {
+            if (recursionDepth > 10)
+                return 0;
             Intersection nearest = new Intersection { length = float.PositiveInfinity };
 
             foreach (var primitive in Scene)
@@ -57,8 +59,8 @@ namespace template
             
             if(nearest.primitive.Material.Reflectivity != 0)
             {
-                Ray reflection = new Ray() { direction = reflectRay(ray.direction, nearest.normal), position = nearest.Position };
-                return (int)(VecToInt(nearest.primitive.Material.color) * (1 - nearest.primitive.Material.Reflectivity) + (TraceRay(reflection) * nearest.primitive.Material.Reflectivity));
+                Ray reflection = new Ray() { direction = reflectRay(ray.direction, nearest.normal), position = nearest.Position + reflectRay(ray.direction, nearest.normal) * 0.01f };
+                return (int)(VecToInt(nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity)) + (TraceRay(reflection, ++recursionDepth) * nearest.primitive.Material.Reflectivity));
             }
 
             return VecToInt(nearest.primitive.Material.color);
@@ -71,17 +73,17 @@ namespace template
 
         private int VecToInt(Vector3 vector)
         {
-            int R = vector.X > 1 ? 255 : (int)vector.X * 255;
-            int G = vector.Y > 1 ? 255 : (int)vector.Y * 255;
-            int B = vector.Z > 1 ? 255 : (int)vector.Z * 255;
+            int R = vector.X > 1 ? 255 : (int)(vector.X * 255);
+            int G = vector.Y > 1 ? 255 : (int)(vector.Y * 255);
+            int B = vector.Z > 1 ? 255 : (int)(vector.Z * 255);
             return (R << 16) + (G << 8) + B;
         }
 
         private void MakeScene()
         {
-            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0) } });
-            Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0) } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0.8f } });
+            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = .5f } });
+            Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = .5f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -15), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0.8f } });
             //Scene.Add(new Plane(new Vector3(0, -5, -12), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(0,1,1)} });
         }
     }
