@@ -14,12 +14,13 @@ namespace template
         public Camera Camera;
         public List<Primitive> Scene = new List<Primitive>();
         public List<Light> Lights = new List<Light>();
+        public Skybox Skydome;
 
         public Raytracer()
         {
             Camera = new Camera();
             Camera.Screen = new Screen(new Vector3(-1, 1, -1), new Vector3(1, 1, -1), new Vector3(-1, -1, -1), new Vector3(1, -1, -1));
-
+            Skydome = new Skybox("../../assets/stpeters_probe.jpg");
             MakeScene();
         }
 
@@ -60,7 +61,7 @@ namespace template
 
             //TODO add skybox here
             if (nearest.primitive == null)
-                return new Vector3();
+                return Skybox(ray);
 
             var illumination = new Vector3();
 
@@ -115,6 +116,8 @@ namespace template
             return nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) * illumination + reflectColor + refractColor;
         }
 
+        
+
         private Vector3 reflect(Ray ray, Intersection intersection, int recursionDepth)
         {
             var reflectionRay = Normalize(reflectRay(ray.direction, intersection.normal));
@@ -150,14 +153,35 @@ namespace template
         {
             Scene.Add(new Sphere(new Vector3(3, 0, -5), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(-3, 0, -5), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -9), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 1f } });
+            //Scene.Add(new Sphere(new Vector3(0, 0, -9), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0.2f } });
 
             
-            Scene.Add(new Plane(new Vector3(0, -1, -4), new Vector3(0, -1, 0)) { Material = new Material { color = new Vector3(1,1,1), } });
+            //Scene.Add(new Plane(new Vector3(0, -1, -4), new Vector3(0, -1, 0)) { Material = new Material { color = new Vector3(1,1,1), } });
 
             Lights.Add(new Light(new Vector3(0,0,0), new Vector3(10, 10, 10)));
 
-            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0, 0, 0), RefractionIndex = 1.333f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0.2f, 0, 0), RefractionIndex = 5f } });
+        }
+
+
+        private Vector3 Skybox(Ray ray)
+        {
+            // flipping the image
+            Vector3 d = -ray.direction;
+            float r = (float)((1d / Math.PI) * Math.Acos(d.Z) / Math.Sqrt(d.X * d.X + d.Y * d.Y));
+            // find the coordinates
+            float u = r * d.X + 1;
+            float v = r * d.Y + 1;
+            // scale the coordinates to image size
+            int iu = (int)(u * Skydome.Texture.Image.GetLength(0) / 2);
+            int iv = (int)(v * Skydome.Texture.Image.GetLength(1) / 2);
+            // fail safe to make sure we're inside of the image coordinates
+            if (iu >= Skydome.Texture.Image.GetLength(0) || iu < 0)
+                iu = 0;
+            if (iv >= Skydome.Texture.Image.GetLength(1) || iv < 0)
+                iv = 0;
+            // return the color
+            return Skydome.Texture.Image[iu, iv];
         }
     }
 
@@ -197,6 +221,51 @@ namespace template
         {
             Position = position;
             Color = color;
+        }
+    }
+
+
+    // TODO
+  
+
+    // skybox for when rays hit nothing
+    public class Skybox
+    {
+        public Texture Texture { get; set; }
+
+        // initialize texture via string
+        public Skybox(string path)
+        {
+            Texture = new Texture(path);
+        }
+    }
+
+    // texture for all primitives
+    public class Texture
+    {
+        // 2d-array of vector3's to make the image accesible in multiple threads
+        public Vector3[,] Image { get; set; }
+        // bitmap used for final texture (changes the Image array when the bitmap is changed as well)
+        public Bitmap Bitmap
+        {
+            get { return Bitmap; }
+            set
+            {
+                Image = new Vector3[value.Width, value.Height];
+                for (int i = 0; i < value.Width; i++)
+                    for (int j = 0; j < value.Height; j++)
+                    {
+                        Color color = value.GetPixel(i, j);
+                        Image[i, j] = new Vector3((float)color.R / 255, (float)color.G / 255, (float)color.B / 255);
+                    }
+            }
+        }
+
+        // initialize texture via string
+        public Texture(string path)
+        {
+            Bitmap image = new Bitmap(path);
+            Bitmap = image;
         }
     }
 }
