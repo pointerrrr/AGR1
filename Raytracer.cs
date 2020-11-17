@@ -34,9 +34,8 @@ namespace template
                     Ray ray = new Ray();
                     ray.position = Camera.Position;
 
-                    ray.direction = new Vector3((i - 256f) / 512, (j - 256f) / 512f, Camera.Position.Z - 1) - Camera.Position;
-                    ray.direction.Normalize();
-                    screen.Pixel (i , j,VecToInt(TraceRay(ray)));
+                    ray.direction = Normalize( new Vector3((i - 256f) / 512, (j - 256f) / 512f, Camera.Position.Z - 1) - Camera.Position);
+                    screen.Pixel (i , j, VecToInt(TraceRay(ray)));
                 }
             }
             return result;
@@ -67,7 +66,8 @@ namespace template
 
             foreach (var light in Lights)
             {
-                if (!castShadowRay(light, nearest.Position + Normalize(light.Position - nearest.Position) * 0.0001f))
+
+                if (castShadowRay(light, nearest.Position + nearest.normal * 0.001f))
                 {
                     var distance = (light.Position - nearest.Position).Length;
                     var attenuation = 1f /  (distance * distance);
@@ -127,10 +127,11 @@ namespace template
 
         private bool castShadowRay(Light light, Vector3 position)
         {
+            var distToLight = (light.Position - position).Length;
             foreach (var primitive in Scene)
             {
-                var intersection = primitive.Intersect(new Ray { position = position, direction = Normalize(position - light.Position) });
-                if (intersection != null)
+                var intersection = primitive.Intersect(new Ray { position = position, direction = Normalize(light.Position - position) });
+                if (intersection != null && intersection.length < distToLight && intersection.length > 0.0001f)
                     return false;
             }
             return true;
@@ -151,16 +152,16 @@ namespace template
 
         private void MakeScene()
         {
-            Scene.Add(new Sphere(new Vector3(3, 0, -5), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(-3, 0, -5), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
-            //Scene.Add(new Sphere(new Vector3(0, 0, -9), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0.2f } });
+            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
 
             
-            //Scene.Add(new Plane(new Vector3(0, -1, -4), new Vector3(0, -1, 0)) { Material = new Material { color = new Vector3(1,1,1), } });
+            Scene.Add(new Plane(new Vector3(0, 0, -20), new Vector3(0, 0, -1)) { Material = new Material { color = new Vector3(1,1,1), } });
 
-            Lights.Add(new Light(new Vector3(0,0,0), new Vector3(10, 10, 10)));
+            Lights.Add(new Light(new Vector3(-7, 0, -10), new Vector3(10, 10, 10)));
 
-            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0.2f, 0, 0), RefractionIndex = 5f } });
+            //Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0.2f, 0, 0), RefractionIndex = 1.333f } });
         }
 
 

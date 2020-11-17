@@ -48,10 +48,10 @@ namespace template
             {
                 var intersection = new Intersection();
 
-                intersection.length = t;
+                intersection.length = t - 0.0001f;
                 intersection.primitive = this;
                 intersection.ray = ray;
-                intersection.Position = t * ray.direction + ray.position;
+                intersection.Position = intersection.length * ray.direction + ray.position;
                 intersection.normal = Normalize(intersection.Position - Position);
                 
 
@@ -81,11 +81,11 @@ namespace template
             {
                 var intersection = new Intersection();
 
-                intersection.length = t;
+                intersection.length = t - 0.0001f;
                 intersection.primitive = this;
                 intersection.ray = ray;
                 intersection.normal = Normal;
-                intersection.Position = ray.position + ray.direction * t;
+                intersection.Position = ray.position + ray.direction * intersection.length;
 
                 return intersection;
             }
