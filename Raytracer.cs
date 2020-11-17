@@ -159,7 +159,7 @@ namespace template
             
             Scene.Add(new Plane(new Vector3(0, 0, -20), new Vector3(0, 0, -1)) { Material = new Material { color = new Vector3(1,1,1), } });
 
-            Lights.Add(new Light(new Vector3(-7, 0, -10), new Vector3(10, 10, 10)));
+            Lights.Add(new Light(new Vector3(-7, 0, -0), new Vector3(100, 100, 100)));
 
             //Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0.2f, 0, 0), RefractionIndex = 1.333f } });
         }
