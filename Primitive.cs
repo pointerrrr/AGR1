@@ -75,21 +75,21 @@ namespace template
         public override Intersection Intersect(Ray ray)
         {
             float par = Dot(ray.direction, Normal);
-            float t = (Dot(Position - ray.position, Normal) * -1)  / par;
+            float t = (Dot(Position - ray.position, Normal))  / par;
 
-            if(Math.Abs(par) > 0.0001f && t > 0)
-            {
-                var intersection = new Intersection();
+            if (Math.Abs(par) < 0.0001f || t < 0)
+                return null;
 
-                intersection.length = t;
-                intersection.primitive = this;
-                intersection.ray = ray;
-                intersection.normal = Normal;
-                intersection.Position = ray.position + ray.direction * t;
+            var intersection = new Intersection();
 
-                return intersection;
-            }
-            return null;
+            intersection.length = t - 0.0001f;
+            intersection.primitive = this;
+            intersection.ray = ray;
+            intersection.normal = par > 0 ? -Normal : Normal;
+            intersection.Position = intersection.length * ray.direction + ray.position;
+
+            return intersection;
+
         }
     }
 
