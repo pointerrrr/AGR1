@@ -42,15 +42,29 @@ namespace template
             if (p2 > Radius2)
                 return null;
 
-            t -= (float)Math.Sqrt(Radius2 - p2);
+            var intersection = new Intersection();
 
-            if ((t < ray.length) && (t > 0))
+            intersection.primitive = this;
+            intersection.ray = ray;
+
+
+            if (C.Length < Radius)
             {
-                var intersection = new Intersection();
+                t += (float)Math.Sqrt(Radius2 - p2);
 
                 intersection.length = t - 0.0001f;
-                intersection.primitive = this;
-                intersection.ray = ray;
+                intersection.Position = intersection.length * ray.direction + ray.position;
+                intersection.normal = Normalize(intersection.Position - Position);
+
+                return intersection;
+            }
+
+            t -= (float)Math.Sqrt(Radius2 - p2);
+
+            if (((t < ray.length) && (t > 0)))
+            {
+
+                intersection.length = t - 0.0001f;
                 intersection.Position = intersection.length * ray.direction + ray.position;
                 intersection.normal = Normalize(intersection.Position - Position);
                 

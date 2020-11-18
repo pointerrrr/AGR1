@@ -44,6 +44,7 @@ namespace template
 			// called once per frame; app logic
 			var keyboard = OpenTK.Input.Keyboard.GetState();
 			if (keyboard[OpenTK.Input.Key.Escape]) this.Exit();
+			game.Controls(keyboard);
 		}
 		protected override void OnRenderFrame(FrameEventArgs e)
 		{

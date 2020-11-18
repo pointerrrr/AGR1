@@ -16,6 +16,8 @@ namespace template {
 		Raytracer raytracer;
 		int[,] pixels;
 
+		private KeyboardState prevKeyState, currentKeyState;
+
 		public void Init()
 		{
 			screen.Clear( 0x000000 );
@@ -41,6 +43,27 @@ namespace template {
 		public void Render()
 		{
 			
+		}
+
+		public void Controls(KeyboardState key)
+        {
+			var camera = raytracer.Camera;
+			currentKeyState = key;
+			if (checkNewKeyPress(Key.W))
+				raytracer.Camera.Reposition( new Vector3(camera.Direction.X, 0, camera.Direction.Z * 0.1f));
+			if (checkNewKeyPress(Key.A))
+				raytracer.Camera.Reposition(new Vector3(camera.Direction.Z, 0, -camera.Direction.X * 0.1f) * -1); ;
+			if (checkNewKeyPress(Key.S))
+				raytracer.Camera.Reposition(new Vector3(camera.Direction.X, 0, camera.Direction.Z * 0.1f) * -1); ;
+			if (checkNewKeyPress(Key.D))
+				raytracer.Camera.Reposition(new Vector3(camera.Direction.Z, 0, -camera.Direction.X * 0.1f)); ;
+
+			prevKeyState = key;
+		}
+
+		private bool checkNewKeyPress(Key key)
+        {
+			return currentKeyState[key] && (currentKeyState[key] != prevKeyState[key]);
 		}
 	}
 

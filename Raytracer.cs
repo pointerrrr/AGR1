@@ -15,12 +15,13 @@ namespace template
         public List<Primitive> Scene = new List<Primitive>();
         public List<Light> Lights = new List<Light>();
         public Skybox Skydome;
+        public int[,] result;
 
         public Raytracer()
         {
-            Camera = new Camera();
-            Camera.Screen = new Screen(new Vector3(-1, 1, -1), new Vector3(1, 1, -1), new Vector3(-1, -1, -1), new Vector3(1, -1, -1));
+            Camera = new Camera(new Vector3(), new Vector3(0,0,-1));
             Skydome = new Skybox("../../assets/stpeters_probe.jpg");
+            result = new int[512,512];
             MakeScene();
         }
 
@@ -34,7 +35,10 @@ namespace template
                     Ray ray = new Ray();
                     ray.position = Camera.Position;
 
-                    ray.direction = Normalize( new Vector3((i - 256f) / 512, (j - 256f) / 512f, Camera.Position.Z - 1) - Camera.Position);
+                    Vector3 horizontal = Normalize(Camera.Screen.TopRigth - Camera.Screen.TopLeft);
+                    Vector3 vertical = Normalize(Camera.Screen.BottomLeft - Camera.Screen.TopLeft);
+                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal * (i / 256f) + vertical * (j / 256f);
+                    ray.direction = Normalize(pixelLocation - Camera.Position);
                     screen.Pixel (i , j, VecToInt(TraceRay(ray)));
                 }
             }
@@ -109,7 +113,7 @@ namespace template
                 if (internalReflection < 0)
                     refractColor = reflect(ray, nearest, recursionDepth);
                 else
-                    refractColor = TraceRay(new Ray() { direction = Normalize(snell * ray.direction + (snell * thetaOne - (float)Math.Sqrt(internalReflection)) * primitiveNormal), position = nearest.Position + ray.direction * 0.0001f });
+                    refractColor = TraceRay(new Ray() { direction = Normalize(snell * ray.direction + (snell * thetaOne - (float)Math.Sqrt(internalReflection)) * primitiveNormal), position = nearest.Position + ray.direction * 0.002f }, recursionDepth++);
             }
 
 
@@ -152,16 +156,16 @@ namespace template
 
         private void MakeScene()
         {
-            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
+            //Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
+            //Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
 
             
-            Scene.Add(new Plane(new Vector3(0, 0, -20), new Vector3(0, 0, -1)) { Material = new Material { color = new Vector3(1,1,1), } });
+            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1,1,1), } });
 
-            Lights.Add(new Light(new Vector3(-7, 0, -0), new Vector3(100, 100, 100)));
+            Lights.Add(new Light(new Vector3(-2, 0, -0), new Vector3(100, 100, 100)));
 
-            //Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0.2f, 0, 0), RefractionIndex = 1.333f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
         }
 
 
