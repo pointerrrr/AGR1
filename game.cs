@@ -7,6 +7,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
+using System.Threading;
 
 namespace template {
 
@@ -31,6 +32,7 @@ namespace template {
 			
 			pixels = raytracer.Trace(screen);
 
+			Controls(OpenTK.Input.Keyboard.GetState());
 			//for (int i = 0; i < 512; i++)
 			//{
 			//	for (int j = 0; j < 512; j++)
@@ -47,17 +49,41 @@ namespace template {
 
 		public void Controls(KeyboardState key)
         {
+			float movementDistance = 0.25f;
 			var camera = raytracer.Camera;
 			currentKeyState = key;
-			if (checkNewKeyPress(Key.W))
-				raytracer.Camera.Reposition( new Vector3(camera.Direction.X, 0, camera.Direction.Z * 0.1f));
-			if (checkNewKeyPress(Key.A))
-				raytracer.Camera.Reposition(new Vector3(camera.Direction.Z, 0, -camera.Direction.X * 0.1f) * -1); ;
-			if (checkNewKeyPress(Key.S))
-				raytracer.Camera.Reposition(new Vector3(camera.Direction.X, 0, camera.Direction.Z * 0.1f) * -1); ;
-			if (checkNewKeyPress(Key.D))
-				raytracer.Camera.Reposition(new Vector3(camera.Direction.Z, 0, -camera.Direction.X * 0.1f)); ;
+			if (currentKeyState[Key.W])
+				camera.Reposition( new Vector3(0, 0, -movementDistance));
+			if (currentKeyState[Key.A])
+				camera.Reposition(new Vector3(-movementDistance, 0, 0));
+			if (currentKeyState[Key.S])
+				camera.Reposition(new Vector3(0, 0, movementDistance));
+			if (currentKeyState[Key.D])
+				camera.Reposition(new Vector3(movementDistance, 0, 0));
+			if (currentKeyState[Key.E])
+				camera.Reposition(new Vector3(0, movementDistance, 0));
+			if (currentKeyState[Key.Q])
+				camera.Reposition(new Vector3(0, -movementDistance, 0));
 
+			if (currentKeyState[Key.Left])
+				camera.YRotation += (float)Math.PI / 10f;
+			if (currentKeyState[Key.Right])
+				camera.YRotation -= (float)Math.PI / 10f;
+			if (currentKeyState[Key.Up])
+				camera.XRotation = (float)(camera.XRotation + Math.PI / 10f > Math.PI / 5f ? Math.PI / 2f : camera.XRotation + Math.PI / 10f);
+			if (currentKeyState[Key.Down])
+				camera.XRotation = (float)(camera.XRotation + Math.PI / 10f < -Math.PI / 5f ? -Math.PI / 2f : camera.XRotation - Math.PI / 10f);
+
+			if (currentKeyState[Key.BracketLeft])
+			{
+				camera.FOV = raytracer.Camera.FOV + 5 > 160 ? 160 : camera.FOV + 5;
+				camera.UpdateScreen();
+			}
+			if (currentKeyState[Key.BracketRight])
+			{
+				camera.FOV = raytracer.Camera.FOV - 5 < 20 ? 20 : camera.FOV - 5;
+				camera.UpdateScreen();
+			}
 			prevKeyState = key;
 		}
 

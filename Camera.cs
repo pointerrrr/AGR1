@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
+using static OpenTK.Vector3;
 
 namespace template
 {
@@ -17,36 +18,31 @@ namespace template
         private float screenDistance;
         public float FocalDistance;
         public float ApertureSize;
+        public float YRotation, XRotation;
 
         public Camera(Vector3 position, Vector3 direction, float fov = 120)
         {
             Position = position;
             Direction = direction;
             FOV = fov;
-            createScreen();
+            UpdateScreen();
         }
 
         public void Reposition(Vector3 vector)
         {
+            Matrix4 rotation = Matrix4.CreateRotationX(XRotation);
+            rotation *= Matrix4.CreateRotationY(YRotation);
+            vector = Transform(vector, rotation);
             Position += vector;
-            updateScreen();
         }
 
-        private void updateScreen()
+        public void UpdateScreen()
         {
-            Screen.TopLeft = Position + Direction * screenDistance + new Vector3(-1, 1, 0);
-            Screen.TopRigth = Position + Direction * screenDistance + new Vector3(1, 1, 0);
-            Screen.BottomLeft = Position + Direction * screenDistance + new Vector3(-1, -1, 0);
-            Screen.BottomRight = Position + Direction * screenDistance + new Vector3(1, -1, 0);
-        }
-
-        private void createScreen()
-        {
-            screenDistance = 1 / (float)Math.Tan((FOV * (Math.PI / 180)) / 2);
-            var leftTop = Position + Direction * screenDistance + new Vector3(-1,1,0) ;
-            var rightTop = Position + Direction * screenDistance + new Vector3(1, 1, 0) ;
-            var leftBottom = Position + Direction * screenDistance + new Vector3(-1, -1, 0);
-            var rightBottom = Position + Direction * screenDistance + new Vector3(1, -1, 0);
+            screenDistance = 1 / (float)Math.Tan(FOV * (Math.PI / 180) / 2);
+            var leftTop = new Vector3(-1, 1, -screenDistance);
+            var rightTop = new Vector3(1, 1, -screenDistance) ;
+            var leftBottom = new Vector3(-1, -1, -screenDistance);
+            var rightBottom = new Vector3(1, -1, -screenDistance);
             Screen = new Screen(leftTop, rightTop, leftBottom, rightBottom);
         }
 

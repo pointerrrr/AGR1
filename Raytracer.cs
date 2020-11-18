@@ -38,6 +38,14 @@ namespace template
                     Vector3 horizontal = Normalize(Camera.Screen.TopRigth - Camera.Screen.TopLeft);
                     Vector3 vertical = Normalize(Camera.Screen.BottomLeft - Camera.Screen.TopLeft);
                     Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal * (i / 256f) + vertical * (j / 256f);
+
+                    Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
+                    rotation *= Matrix4.CreateRotationY(Camera.YRotation);
+                    Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
+
+                    pixelLocation = Transform(pixelLocation, rotation);
+                    pixelLocation = Transform(pixelLocation, translation);                    
+
                     ray.direction = Normalize(pixelLocation - Camera.Position);
                     screen.Pixel (i , j, VecToInt(TraceRay(ray)));
                 }
