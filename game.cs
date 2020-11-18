@@ -14,7 +14,7 @@ namespace template {
 	class Game
 	{
 		public Surface screen;
-		Raytracer raytracer;
+		public Raytracer raytracer;
 		int[,] pixels;
 		int numThreads = 9;
 		Thread[] t;

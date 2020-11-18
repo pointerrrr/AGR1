@@ -17,7 +17,7 @@ namespace template
         public List<Light> Lights = new List<Light>();
         public Skybox Skydome;
         public int[,] result;
-        private int height, width;
+        public int height, width;
 
         public Raytracer(int numThreads, int Height = 512, int Width = 512)
         {
@@ -45,7 +45,7 @@ namespace template
 
                     Vector3 horizontal = Normalize(Camera.Screen.TopRigth - Camera.Screen.TopLeft);
                     Vector3 vertical = Normalize(Camera.Screen.BottomLeft - Camera.Screen.TopLeft);
-                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal * (x / 256f) + vertical * (y / 256f);
+                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal * (x / (width / 2f)) + vertical * (y / (height / 2f));
 
                     Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
                     rotation *= Matrix4.CreateRotationY(Camera.YRotation);
