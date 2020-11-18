@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using OpenTK;
 using System.Drawing;
 using static OpenTK.Vector3;
+using System.Threading;
 
 namespace template
 {
@@ -16,33 +17,39 @@ namespace template
         public List<Light> Lights = new List<Light>();
         public Skybox Skydome;
         public int[,] result;
+        private int height, width;
 
-        public Raytracer()
+        public Raytracer(int numThreads, int Height = 512, int Width = 512)
         {
             Camera = new Camera(new Vector3(), new Vector3(0,0,-1));
             Skydome = new Skybox("../../assets/stpeters_probe.jpg");
-            result = new int[512,512];
+            result = new int[512, 512];
+            height = Height;
+            width = Width;
             MakeScene();
         }
 
-        public int[,] Trace(Surface screen)
+        public void Trace(Surface screen, int threadId, int numthreads)
         {
-            int[,] result = new int[512, 512];
-            for (int i = 0; i < 512; i++)
-            {
-                for (int j = 0; j < 512; j++)
+            int sqr = (int)Math.Sqrt(numthreads);
+            int fromX = (threadId % sqr) * width / sqr;
+            int toX = ((threadId % sqr) + 1) * width / sqr;
+            int fromY = (int)(threadId / sqr) * height / sqr;
+            int toY = ((int)(threadId / sqr) + 1) * height / sqr;
+                for (int x = fromX; x < toX; x++)
                 {
-                    Ray ray = new Ray();
-                    ray.position = Camera.Position;
+                    for (int y = fromY; y < toY; y++)
+                    {
+                        Ray ray = new Ray();
+                        ray.position = Camera.Position;
 
-                    Vector3 horizontal = Normalize(Camera.Screen.TopRigth - Camera.Screen.TopLeft);
-                    Vector3 vertical = Normalize(Camera.Screen.BottomLeft - Camera.Screen.TopLeft);
-                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal * (i / 256f) + vertical * (j / 256f);
-                    ray.direction = Normalize(pixelLocation - Camera.Position);
-                    screen.Pixel (i , j, VecToInt(TraceRay(ray)));
+                        Vector3 horizontal = Normalize(Camera.Screen.TopRigth - Camera.Screen.TopLeft);
+                        Vector3 vertical = Normalize(Camera.Screen.BottomLeft - Camera.Screen.TopLeft);
+                        Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal * (x / 256f) + vertical * (y / 256f);
+                        ray.direction = Normalize(pixelLocation - Camera.Position);
+                        result[x, y] = VecToInt(TraceRay(ray));
+                    }
                 }
-            }
-            return result;
         }
 
         private Vector3 TraceRay(Ray ray, int recursionDepth = 0)
