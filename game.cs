@@ -16,7 +16,7 @@ namespace template {
 		public Surface screen;
 		Raytracer raytracer;
 		int[,] pixels;
-		int numThreads = 4;
+		int numThreads = 9;
 		Thread[] t;
 		Thread screenThread;
 		public int Width = 512;
@@ -133,12 +133,12 @@ namespace template {
 			}
 			if (currentKeyState[Key.Up])
 			{
-				camera.XRotation = (float)(camera.XRotation + Math.PI / 10f > Math.PI / 5f ? Math.PI / 2f : camera.XRotation + Math.PI / 10f);
+				camera.XRotation = (float)(camera.XRotation + Math.PI / 10f > Math.PI / 2f ? Math.PI / 2f : camera.XRotation + Math.PI / 10f);
 				keyPressed = true;
 			}
 			if (currentKeyState[Key.Down])
 			{
-				camera.XRotation = (float)(camera.XRotation + Math.PI / 10f < -Math.PI / 5f ? -Math.PI / 2f : camera.XRotation - Math.PI / 10f);
+				camera.XRotation = (float)(camera.XRotation + Math.PI / 10f < -Math.PI / 2f ? -Math.PI / 2f : camera.XRotation - Math.PI / 10f);
 				keyPressed = true;
 			}
 
