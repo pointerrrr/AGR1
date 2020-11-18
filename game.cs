@@ -16,7 +16,7 @@ namespace template {
 		public Surface screen;
 		Raytracer raytracer;
 		int[,] pixels;
-		int numThreads = 9;
+		int numThreads = 4;
 		Thread[] t;
 		Thread screenThread;
 		public int Width = 512;
