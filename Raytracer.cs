@@ -23,7 +23,7 @@ namespace template
         {
             Camera = new Camera(new Vector3(), new Vector3(0,0,-1));
             Skydome = new Skybox("../../assets/stpeters_probe.jpg");
-            result = new int[512, 512];
+            result = new int[Width, Height];
             height = Height;
             width = Width;
             MakeScene();
@@ -45,7 +45,7 @@ namespace template
 
                         Vector3 horizontal = Normalize(Camera.Screen.TopRigth - Camera.Screen.TopLeft);
                         Vector3 vertical = Normalize(Camera.Screen.BottomLeft - Camera.Screen.TopLeft);
-                        Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal * (x / 256f) + vertical * (y / 256f);
+                        Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal * (x / (width / 2f)) + vertical * (y / (height / 2f));
                         ray.direction = Normalize(pixelLocation - Camera.Position);
                         result[x, y] = VecToInt(TraceRay(ray));
                     }

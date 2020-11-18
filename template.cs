@@ -13,15 +13,17 @@ namespace template
 	{
 		static int screenID;
 		static Game game;
+		int width = 1920;
+		int height = 1080;
 		protected override void OnLoad( EventArgs e )
 		{
 			// called upon app init
 			GL.ClearColor( Color.Black );
 			GL.Enable( EnableCap.Texture2D );
 			GL.Hint( HintTarget.PerspectiveCorrectionHint, HintMode.Nicest );
-			ClientSize = new Size( 512, 512 );
-			game = new Game();
-			game.screen = new Surface( Width, Height );
+			ClientSize = new Size( width, height );
+			game = new Game(width, height);
+			game.screen = new Surface(width, height);
 			Sprite.target = game.screen;
 			screenID = game.screen.GenTexture();
 			game.Init();

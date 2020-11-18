@@ -19,14 +19,23 @@ namespace template {
 		int numThreads = 4;
 		Thread[] t;
 		Thread screenThread;
+		public int Width = 512;
+		public int Height = 512;
+
 
 		private KeyboardState prevKeyState, currentKeyState;
+
+		public Game(int width, int height)
+        {
+			Width = width;
+			Height = height;
+        }
 
 		public void Init()
 		{
 			screen.Clear( 0x000000 );
 
-			raytracer = new Raytracer(numThreads);
+			raytracer = new Raytracer(numThreads, Height, Width);
 			t = new Thread[numThreads];
 			trace();
 			draw();
@@ -57,9 +66,9 @@ namespace template {
 
 		public void draw()
         {
-			for (int i = 0; i < 512; i++)
+			for (int i = 0; i < Width; i++)
 			{
-				for (int j = 0; j < 512; j++)
+				for (int j = 0; j < Height; j++)
 				{
 					screen.Pixel(i, j, raytracer.result[i, j]);
 				}
