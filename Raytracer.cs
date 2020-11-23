@@ -173,14 +173,17 @@ namespace template
         {
             //Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
             //Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
+            //Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
 
             
             Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1,1,1), } });
 
-            Lights.Add(new Light(new Vector3(-2, 0, -0), new Vector3(100, 100, 100)));
+            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
 
-            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
+            //Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
+
+            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
+            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
         }
 
 
