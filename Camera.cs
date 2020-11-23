@@ -19,12 +19,14 @@ namespace template
         public float FocalDistance;
         public float ApertureSize;
         public float YRotation, XRotation;
+        public float AspectRatio;
 
-        public Camera(Vector3 position, Vector3 direction, float fov = 120)
+        public Camera(Vector3 position, Vector3 direction, float aspectRatio, float fov = 120)
         {
             Position = position;
             Direction = direction;
             FOV = fov;
+            AspectRatio = aspectRatio;
             UpdateScreen();
         }
 
@@ -39,10 +41,10 @@ namespace template
         public void UpdateScreen()
         {
             screenDistance = 1 / (float)Math.Tan(FOV * (Math.PI / 180) / 2);
-            var leftTop = new Vector3(-1, 1, -screenDistance);
-            var rightTop = new Vector3(1, 1, -screenDistance) ;
-            var leftBottom = new Vector3(-1, -1, -screenDistance);
-            var rightBottom = new Vector3(1, -1, -screenDistance);
+            var leftTop = new Vector3(-AspectRatio, 1, -screenDistance);
+            var rightTop = new Vector3(AspectRatio, 1, -screenDistance) ;
+            var leftBottom = new Vector3(-AspectRatio, -1, -screenDistance);
+            var rightBottom = new Vector3(AspectRatio, -1, -screenDistance);
             Screen = new Screen(leftTop, rightTop, leftBottom, rightBottom);
         }
 

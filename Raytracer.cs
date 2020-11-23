@@ -17,25 +17,28 @@ namespace template
         public List<Light> Lights = new List<Light>();
         public Skybox Skydome;
         public int[,] result;
-        public int height, width;
+        public int Height, Width;
+        public float AspectRatio;
 
-        public Raytracer(int numThreads, int Height = 512, int Width = 512)
+        public Raytracer(int numThreads, int height = 512, int width = 512)
         {
-            Camera = new Camera(new Vector3(), new Vector3(0,0,-1));
+            Height = height;
+            Width = width;
+            AspectRatio = width / ((float) height);
+            Camera = new Camera(new Vector3(), new Vector3(0,0,-1), AspectRatio);
             Skydome = new Skybox("../../assets/stpeters_probe.jpg");
             result = new int[Width, Height];
-            height = Height;
-            width = Width;
+            
             MakeScene();
         }
 
         public void Trace(Surface screen, int threadId, int numthreads)
         {
             int sqr = (int)Math.Sqrt(numthreads);
-            int fromX = (threadId % sqr) * width / sqr;
-            int toX = ((threadId % sqr) + 1) * width / sqr;
-            int fromY = (threadId / sqr) * height / sqr;
-            int toY = ((threadId / sqr) + 1) * height / sqr;
+            int fromX = (threadId % sqr) * Width / sqr;
+            int toX = ((threadId % sqr) + 1) * Width / sqr;
+            int fromY = (threadId / sqr) * Height / sqr;
+            int toY = ((threadId / sqr) + 1) * Height / sqr;
             for (int x = fromX; x < toX; x++)
             {
                 for (int y = fromY; y < toY; y++)
@@ -43,9 +46,9 @@ namespace template
                     Ray ray = new Ray();
                     ray.position = Camera.Position;
 
-                    Vector3 horizontal = Normalize(Camera.Screen.TopRigth - Camera.Screen.TopLeft);
-                    Vector3 vertical = Normalize(Camera.Screen.BottomLeft - Camera.Screen.TopLeft);
-                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal * (x / (width / 2f)) + vertical * (y / (height / 2f));
+                    Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
+                    Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
+                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width  * x + vertical / Height * y;
 
                     Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
                     rotation *= Matrix4.CreateRotationY(Camera.YRotation);
@@ -171,16 +174,16 @@ namespace template
 
         private void MakeScene()
         {
-            //Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
-            //Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
-            //Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
 
             
             Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1,1,1), } });
 
             Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
 
-            //Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
 
             Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
             Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
