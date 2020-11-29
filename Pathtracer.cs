@@ -18,6 +18,7 @@ namespace template
         public int Height, Width;
         public float AspectRatio;
         public Skybox Skydome;
+        Random random = new Random();
 
         public Pathtracer(int numThreads, int height = 512, int width = 512)
         {
@@ -58,7 +59,7 @@ namespace template
 
                     ray.direction = Normalize(pixelLocation - Camera.Position);
 
-                    int samples = 10;
+                    float samples = 100;
 
                     Vector3 jemoeder = new Vector3();
 
@@ -95,24 +96,27 @@ namespace template
             if (nearest.primitive.Material.IsLight)
                 return nearest.primitive.Material.Emittance;
 
-            var newRayDir = DiffuseReflection(nearest.normal);
 
-            var newRay = new Ray { position = nearest.Position, direction = newRayDir };
+            var newDirection = DiffuseReflection(nearest.normal);
 
-            var BRDF = nearest.primitive.Material.Albedo / (float)Math.PI;
+            var newRay = new Ray { direction = newDirection, position = nearest.Position, length = float.PositiveInfinity };
 
-            var tracedRay = TraceRay(newRay, ++recursionDepth);
+            float p = (float)( 1f / (2f * Math.PI));
 
-            var Ei =  tracedRay * Dot(nearest.normal, newRayDir);
+            float cos_theta = Dot(newDirection, nearest.normal);
 
-            if ((BRDF.X > 0 || BRDF.Y > 0 || BRDF.Z > 0))// && (Ei.X > 0 || Ei.Y > 0 || Ei.Z > 0))
-                ;
+            Vector3 BRDF = nearest.primitive.Material.color / (float)Math.PI;
 
-            return (float)Math.PI * 2f * BRDF + Ei;
+            Vector3 incoming = TraceRay(newRay, ++recursionDepth);
+
+            return (BRDF * incoming * cos_theta / p);
+
+            //return (float)Math.PI * 2f * BRDF + Ei;
         }
 
         private Vector3 DiffuseReflection(Vector3 Normal)
         {
+            /*
             var Random = new Random();
             float z = (float)Random.NextDouble();
             float theta = (float)( Random.NextDouble() * Math.PI * 2 - Math.PI);
@@ -126,7 +130,24 @@ namespace template
             rotation *= Matrix4.CreateRotationY(Normal.Y);
             rotation *= Matrix4.CreateRotationZ(Normal.Z);
 
-            return Transform(result, rotation);
+            return Normalize(Transform(result, rotation));
+            */
+
+            Vector3 b3 = Normalize(Normal);
+            Vector3 different = Math.Abs(b3.X) < 0.5f ? new Vector3(1, 0, 0) : new Vector3(0, 1, 0);
+
+            Vector3 b1 = Normalize(Cross(b3, different));
+            Vector3 b2 = Cross(b1, b3);
+
+            float z = (float)random.NextDouble();
+            float r = (float)Math.Sqrt(1f - z * z);
+
+            float theta = (float)( random.NextDouble() * Math.PI * 2f - Math.PI);
+
+            float x = (float)(r * Math.Cos(theta));
+            float y = (float)(r * Math.Sin(theta));
+
+            return x * b1 + y * b2 + z * b3;
         }
 
         private void MakeScene()
@@ -135,7 +156,7 @@ namespace template
             Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f, Albedo = new Vector3(0f, 01f, 0f) } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f, Albedo = new Vector3(1f, 0f, 0f) } });
 
-            Scene.Add(new Sphere(new Vector3(0, 0, 2), 1) { Material = new Material {Emittance = new Vector3(1, 1, 1), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } } );
+            Scene.Add(new Sphere(new Vector3(0, 0, 101), 100) { Material = new Material {Emittance = new Vector3(1, 1, 1), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } } );
 
             //Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1,1,1) } });
         }
