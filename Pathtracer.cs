@@ -57,7 +57,19 @@ namespace template
                     pixelLocation = Transform(pixelLocation, translation);
 
                     ray.direction = Normalize(pixelLocation - Camera.Position);
-                    result[x, y] = VecToInt(TraceRay(ray));
+
+                    int samples = 10;
+
+                    Vector3 jemoeder = new Vector3();
+
+                    for(int i = 0; i < samples; i++)
+                    {
+                        jemoeder  += TraceRay(ray);
+                    }
+
+                    jemoeder /= samples;
+
+                    result[x, y] = VecToInt(jemoeder);
                 }
             }
         }
@@ -123,9 +135,9 @@ namespace template
             Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f, Albedo = new Vector3(0f, 01f, 0f) } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f, Albedo = new Vector3(1f, 0f, 0f) } });
 
-            Scene.Add(new Sphere(new Vector3(0, 0, 2), 1) { Material = new Material {Emittance = new Vector3(100, 100, 100), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } } );
+            Scene.Add(new Sphere(new Vector3(0, 0, 2), 1) { Material = new Material {Emittance = new Vector3(1, 1, 1), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } } );
 
-            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1,1,1) } });
+            //Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1,1,1) } });
         }
     }
 
