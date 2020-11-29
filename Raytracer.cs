@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
 using System.Drawing;
-using static OpenTK.Vector3;
 using System.Threading;
+using static OpenTK.Vector3;
+using static template.Constants;
 
 namespace template
 {
@@ -159,18 +160,7 @@ namespace template
             return true;
         }
         
-        private Vector3 reflectRay(Vector3 rayDirection, Vector3 normal)
-        {
-            return rayDirection - 2 * Dot(rayDirection, normal) * normal;
-        }
-
-        private int VecToInt(Vector3 vector)
-        {
-            int R = vector.X > 1 ? 255 : (int)(vector.X * 255);
-            int G = vector.Y > 1 ? 255 : (int)(vector.Y * 255);
-            int B = vector.Z > 1 ? 255 : (int)(vector.Z * 255);
-            return (R << 16) + (G << 8) + B;
-        }
+        
 
         private void MakeScene()
         {
@@ -234,8 +224,11 @@ namespace template
     public class Material
     {
         public Vector3 color;
+        public Vector3 Emittance;
+        public bool IsLight;
         public float Reflectivity;
         public float RefractionIndex;
+        public Vector3 Albedo;
     }
 
     public class Light

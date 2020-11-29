@@ -15,6 +15,7 @@ namespace template {
 	{
 		public Surface screen;
 		public Raytracer raytracer;
+		public Pathtracer pathtracer;
 		int[,] pixels;
 		int numThreads = 9;
 		Thread[] t;
@@ -36,6 +37,7 @@ namespace template {
 			screen.Clear( 0x000000 );
 
 			raytracer = new Raytracer(numThreads, Height, Width);
+			pathtracer = new Pathtracer(numThreads, Height, Width);
 			t = new Thread[numThreads];
 			Trace();
 			Draw();
@@ -69,14 +71,15 @@ namespace template {
 			{
 				for (int j = 0; j < Height; j++)
 				{
-					screen.Pixel(i, j, raytracer.result[i, j]);
+					screen.Pixel(i, j, pathtracer.result[i, j]);
 				}
 			}
 		}
 
 		private void startTracing(object mt)
         {
-			raytracer.Trace(screen, (int) mt, numThreads);
+			//raytracer.Trace(screen, (int) mt, numThreads);
+			pathtracer.Trace(screen, (int)mt, numThreads);
 		}
 
 		public void Render()

@@ -162,4 +162,15 @@ namespace template
             return intersection;
         }
     }
+
+    public class Torus : Primitive
+    {
+        public float Radius, Thickness;
+
+        public override Intersection Intersect(Ray ray)
+        {
+            
+            throw new NotImplementedException();
+        }
+    }
 }

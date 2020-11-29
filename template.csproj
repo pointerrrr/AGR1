@@ -49,6 +49,7 @@
     <Compile Include="Camera.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="game.cs" />
+    <Compile Include="Pathtracer.cs" />
     <Compile Include="Primitive.cs" />
     <Compile Include="Raytracer.cs" />
     <Compile Include="surface.cs" />
