@@ -79,7 +79,8 @@ namespace template {
 
 		private void startTracing(object mt)
         {
-			raytracer.Trace(screen, (int) mt, numThreads);
+			//raytracer.Trace(screen, (int) mt, numThreads);
+			pathtracer.samplesTaken += 100;
 			pathtracer.Trace(screen, (int)mt, numThreads);
 		}
 
@@ -160,11 +161,14 @@ namespace template {
 				keyPressed = true;
 			}
 			prevKeyState = key;
-            if (keyPressed)
-            {
-				Trace();
-				Draw();
-            }			
+			if (keyPressed)
+			{
+				
+				pathtracer.Clear();
+				
+			}
+			Trace();
+			Draw();
 		}
 
 		private bool checkNewKeyPress(Key key)

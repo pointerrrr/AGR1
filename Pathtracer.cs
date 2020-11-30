@@ -15,9 +15,12 @@ namespace template
         public List<Primitive> Scene = new List<Primitive>();
 
         public int[,] result;
+        public Vector3[,] resultRaw;
         public int Height, Width;
         public float AspectRatio;
         public Skybox Skydome;
+        public int samplesTaken = 0;
+
         Random[] random;
 
         public Pathtracer(int numThreads, int height = 512, int width = 512)
@@ -31,6 +34,7 @@ namespace template
             Camera = new Camera(new Vector3(), new Vector3(0, 0, -1), AspectRatio);
             Skydome = new Skybox("../../assets/stpeters_probe.jpg");
             result = new int[Width, Height];
+            resultRaw = new Vector3[Width, Height];
 
             MakeScene();
         }
@@ -62,20 +66,22 @@ namespace template
 
                     ray.direction = Normalize(pixelLocation - Camera.Position);
 
-                    float samples = 10;
+                    Vector3 tempRes = new Vector3();
 
-                    Vector3 jemoeder = new Vector3();
-
-                    for(int i = 0; i < samples; i++)
+                    for(int i = 0; i < 100; i++)
                     {
-                        jemoeder  += TraceRay(ray, threadId, 0);
+                        resultRaw[x, y] += TraceRay(ray, threadId, 0);
                     }
 
-                    jemoeder /= samples;
-
-                    result[x, y] = VecToInt(jemoeder);
+                    result[x, y] = VecToInt(resultRaw[x, y] / samplesTaken);
                 }
             }
+        }
+
+        public void Clear()
+        {
+            samplesTaken = 0;
+            resultRaw = new Vector3[Width, Height];
         }
 
         public Vector3 TraceRay(Ray ray, int threadId, int recursionDepth = 0)
@@ -203,7 +209,7 @@ namespace template
             Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f, Albedo = new Vector3(0f, 01f, 0f) } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f, Albedo = new Vector3(1f, 0f, 0f), RefractionIndex = 1.5f } });
 
-            Scene.Add(new Sphere(new Vector3(0, 5, -10), 2) { Material = new Material {Emittance = new Vector3(15, 15, 15), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } } );
+            Scene.Add(new Sphere(new Vector3(0, 5, -10), 5) { Material = new Material {Emittance = new Vector3(500, 500, 500), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } } );
 
             Scene.Add(new Plane(new Vector3(0, -20, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1,1,1) } });
         }
