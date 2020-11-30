@@ -8,12 +8,12 @@ using static OpenTK.Vector3;
 
 namespace template
 {
-    public static class Constants
+    public static class GlobalLib
     {
         public static float Epsilon = 0.000001f;
         public static int MaxRecursion = 10;
 
-        public static Vector3 reflectRay(Vector3 rayDirection, Vector3 normal)
+        public static Vector3 ReflectRay(Vector3 rayDirection, Vector3 normal)
         {
             return rayDirection - 2 * Dot(rayDirection, normal) * normal;
         }

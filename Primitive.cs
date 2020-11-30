@@ -7,7 +7,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using static OpenTK.Vector3;
-using static template.Constants;
+using static template.GlobalLib;
 
 namespace template
 {
@@ -100,8 +100,11 @@ namespace template
             intersection.length = t - 0.0001f;
             intersection.primitive = this;
             intersection.ray = ray;
-            intersection.normal = par > 0 ? -Normal : Normal;
-            intersection.Position = ray.position + ray.direction * intersection.length;
+            intersection.normal = par > 0 ? Normal : Normal;
+            intersection.Position = ray.position + ray.direction * intersection.length + Normal * 0.001f;
+
+            if (intersection.normal != new Vector3(0, 1, 0))
+                ;
 
             return intersection;
 

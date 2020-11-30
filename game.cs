@@ -71,6 +71,7 @@ namespace template {
 			{
 				for (int j = 0; j < Height; j++)
 				{
+					//screen.Pixel(i, j, raytracer.result[i, j]);
 					screen.Pixel(i, j, pathtracer.result[i, j]);
 				}
 			}
@@ -78,7 +79,7 @@ namespace template {
 
 		private void startTracing(object mt)
         {
-			//raytracer.Trace(screen, (int) mt, numThreads);
+			raytracer.Trace(screen, (int) mt, numThreads);
 			pathtracer.Trace(screen, (int)mt, numThreads);
 		}
 
@@ -90,7 +91,8 @@ namespace template {
 		public void Controls(KeyboardState key)
         {
 			float movementDistance = 0.25f;
-			var camera = raytracer.Camera;
+			//var camera = raytracer.Camera;
+			var camera = pathtracer.Camera;
 			currentKeyState = key;
 			bool keyPressed = false;
 			if (currentKeyState[Key.W])

@@ -7,7 +7,7 @@ using OpenTK;
 using System.Drawing;
 using System.Threading;
 using static OpenTK.Vector3;
-using static template.Constants;
+using static template.GlobalLib;
 
 namespace template
 {
@@ -143,7 +143,7 @@ namespace template
 
         private Vector3 reflect(Ray ray, Intersection intersection, int recursionDepth)
         {
-            var reflectionRay = Normalize(reflectRay(ray.direction, intersection.normal));
+            var reflectionRay = Normalize(ReflectRay(ray.direction, intersection.normal));
             Ray reflection = new Ray() { direction = reflectionRay, position = intersection.Position + reflectionRay * 0.0001f };
             return TraceRay(reflection, ++recursionDepth) * intersection.primitive.Material.Reflectivity;
         }
