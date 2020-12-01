@@ -34,8 +34,6 @@ namespace template
 
         protected abstract Vector3 TraceRay(Ray ray, int threadId, int recursionDepth = 0);
 
-
-
         protected Vector3 reflect(Ray ray, Intersection intersection, int recursionDepth, int threadId)
         {
             var reflectionRay = Normalize(ReflectRay(ray.direction, intersection.normal));

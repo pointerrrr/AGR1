@@ -36,8 +36,8 @@ namespace template {
 		{
 			screen.Clear( 0x000000 );
 
-			tracer = new Raytracer(numThreads, Height, Width);
-			//tracer = new Pathtracer(numThreads, Height, Width);
+			//tracer = new Raytracer(numThreads, Height, Width);
+			tracer = new Pathtracer(numThreads, Height, Width);
 			t = new Thread[numThreads];
 			Trace();
 			Draw();

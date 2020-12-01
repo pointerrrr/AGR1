@@ -25,13 +25,30 @@ namespace template
 
         private void MakeScene()
         {
-            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 1f, Albedo = new Vector3(0f, 0f, 1f) } });
+            /*Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 1f, Albedo = new Vector3(0f, 0f, 1f) } });
             Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f, Albedo = new Vector3(0f, 01f, 0f) } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f, Albedo = new Vector3(1f, 0f, 0f), RefractionIndex = 1.5f } });
 
             Scene.Add(new Sphere(new Vector3(0, 5, -10), 5) { Material = new Material { Emittance = new Vector3(50, 50, 50), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } });
 
-            Scene.Add(new Plane(new Vector3(0, -20, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1, 1, 1) } });
+            Scene.Add(new Plane(new Vector3(0, -20, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1, 1, 1) } });*/
+
+            Scene.Add(new Sphere(new Vector3(3, -2, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
+
+
+            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), } });
+
+            //Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
+            Scene.Add(new Sphere(new Vector3(0, 0, 5), 3) { Material = new Material { Emittance = new Vector3(100, 100, 100), IsLight = true } } );
+
+            Scene.Add(new Sphere(new Vector3(-5, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
+
+            Scene.Add(new Sphere(new Vector3(5, 0, -5), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 0.5f } });
+
+            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
+            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
         }
 
         public override void Trace(Surface screen, int threadId, int numthreads)
@@ -45,30 +62,42 @@ namespace template
             {
                 for (int y = fromY; y < toY; y++)
                 {
-                    Ray ray = new Ray();
-                    ray.position = Camera.Position;
-
-                    Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
-                    Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
-                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width * x + vertical / Height * y;
-
-                    Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
-                    rotation *= Matrix4.CreateRotationY(Camera.YRotation);
-                    Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
-
-                    pixelLocation = Transform(pixelLocation, rotation);
-                    pixelLocation = Transform(pixelLocation, translation);
-
-                    ray.direction = Normalize(pixelLocation - Camera.Position);
-
-                    Vector3 tempRes = new Vector3();
-
-                    for(int i = 0; i < SamplesPerFrame; i++)
+                    Vector3 aaResult = new Vector3();
+                    float AAsqrt = (float)Math.Sqrt(AA);
+                    for (float aax = 0; aax < AAsqrt; aax++)
                     {
-                        resultRaw[x, y] += TraceRay(ray, threadId, 0);
+                        for (float aay = 0; aay < AAsqrt; aay++)
+                        {
+                            Ray ray = new Ray();
+                            ray.position = Camera.Position;
+
+                            Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
+                            Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
+
+                            Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width * (x + aax * (1f / AAsqrt) - 0.5f) + vertical / Height * (y + aay * (1f / AAsqrt) - 0.5f);
+
+                            Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
+                            rotation *= Matrix4.CreateRotationY(Camera.YRotation);
+                            Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
+
+                            pixelLocation = Transform(pixelLocation, rotation);
+                            pixelLocation = Transform(pixelLocation, translation);
+
+                            ray.direction = Normalize(pixelLocation - Camera.Position);
+
+                            for (int i = 0; i < SamplesPerFrame; i++)
+                            {
+                                var a = TraceRay(ray, threadId, 0);
+                                aaResult += a;
+                            }
+
+                        }   
                     }
 
-                    result[x, y] = VecToInt(resultRaw[x, y] / SamplesTaken);
+                    //resultRaw[x, y] = resultRaw[x,y] / (SamplesTaken - SamplesPerFrame) + aaResult / (SamplesPerFrame * AA);
+
+                    resultRaw[x, y] += aaResult;
+                    result[x, y] = VecToInt(resultRaw[x, y]/(SamplesTaken * AA));
                 }
             }
         }

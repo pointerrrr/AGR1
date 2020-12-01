@@ -46,22 +46,32 @@ namespace template
             {
                 for (int y = fromY; y < toY; y++)
                 {
-                    Ray ray = new Ray();
-                    ray.position = Camera.Position;
+                    Vector3 aaResult = new Vector3();
+                    float AAsqrt = (float)Math.Sqrt(AA);
+                    for (float aax = 0; aax < AAsqrt; aax++)
+                    {
+                        for (float aay = 0; aay < AAsqrt; aay++)
+                        {
+                            Ray ray = new Ray();
+                            ray.position = Camera.Position;
 
-                    Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
-                    Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
-                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width * x + vertical / Height * y;
+                            Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
+                            Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
+                            Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width * (x + aax * (1f/AAsqrt) - 0.5f) + vertical / Height * (y + aay * ( 1f/AAsqrt) - 0.5f);
 
-                    Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
-                    rotation *= Matrix4.CreateRotationY(Camera.YRotation);
-                    Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
+                            Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
+                            rotation *= Matrix4.CreateRotationY(Camera.YRotation);
+                            Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
 
-                    pixelLocation = Transform(pixelLocation, rotation);
-                    pixelLocation = Transform(pixelLocation, translation);
+                            pixelLocation = Transform(pixelLocation, rotation);
+                            pixelLocation = Transform(pixelLocation, translation);
 
-                    ray.direction = Normalize(pixelLocation - Camera.Position);
-                    result[x, y] = VecToInt(TraceRay(ray, threadId));
+                            ray.direction = Normalize(pixelLocation - Camera.Position);
+                            aaResult += TraceRay(ray, threadId);
+                        }
+                    }
+                    aaResult /= AA;
+                    result[x, y] = VecToInt(aaResult);
                 }
             }
         }

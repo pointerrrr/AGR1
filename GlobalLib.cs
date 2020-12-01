@@ -12,7 +12,8 @@ namespace template
     {
         public static float Epsilon = 0.000001f;
         public static int MaxRecursion = 10;
-        public static int SamplesPerFrame = 10;
+        public static int SamplesPerFrame = 1;
+        public static int AA = 4;
 
         public static Vector3 ReflectRay(Vector3 rayDirection, Vector3 normal)
         {
