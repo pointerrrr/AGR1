@@ -23,29 +23,20 @@ namespace template
     // texture for all primitives
     public class Texture
     {
-        // 2d-array of vector3's to make the image accesible in multiple threads
-        public Vector3[,] Image { get; set; }
-        // bitmap used for final texture (changes the Image array when the bitmap is changed as well)
-        public Bitmap Bitmap
-        {
-            get { return Bitmap; }
-            set
-            {
-                Image = new Vector3[value.Width, value.Height];
-                for (int i = 0; i < value.Width; i++)
-                    for (int j = 0; j < value.Height; j++)
-                    {
-                        Color color = value.GetPixel(i, j);
-                        Image[i, j] = new Vector3((float)color.R / 255, (float)color.G / 255, (float)color.B / 255);
-                    }
-            }
-        }
+        public Vector3[,] Image;
 
-        // initialize texture via string
         public Texture(string path)
         {
             Bitmap image = new Bitmap(path);
-            Bitmap = image;
+            Image = new Vector3[image.Width, image.Height];
+            for (int i = 0; i < image.Width; i++)
+            {
+                for (int j = 0; j < image.Height; j++)
+                {
+                    Color color = image.GetPixel(i, j);
+                    Image[i, j] = new Vector3((float)color.R / 255, (float)color.G / 255, (float)color.B / 255);
+                }
+            }
         }
     }
 

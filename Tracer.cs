@@ -42,26 +42,6 @@ namespace template
             return TraceRay(reflection, threadId, ++recursionDepth) * intersection.primitive.Material.Reflectivity;
         }
 
-        private Vector3 Skybox(Ray ray)
-        {
-            // flipping the image
-            Vector3 d = -ray.direction;
-            float r = (float)((1d / Math.PI) * Math.Acos(d.Z) / Math.Sqrt(d.X * d.X + d.Y * d.Y));
-            // find the coordinates
-            float u = r * d.X + 1;
-            float v = r * d.Y + 1;
-            // scale the coordinates to image size
-            int iu = (int)(u * Skydome.Texture.Image.GetLength(0) / 2);
-            int iv = (int)(v * Skydome.Texture.Image.GetLength(1) / 2);
-            // fail safe to make sure we're inside of the image coordinates
-            if (iu >= Skydome.Texture.Image.GetLength(0) || iu < 0)
-                iu = 0;
-            if (iv >= Skydome.Texture.Image.GetLength(1) || iv < 0)
-                iv = 0;
-            // return the color
-            return Skydome.Texture.Image[iu, iv];
-        }
-
         public List<Primitive> ReadObj(string path, Matrix4 transformation, Texture texture = null)
         {
             var vertices = new List<Vector3>();
@@ -88,9 +68,6 @@ namespace template
                             float a = 0;
                             if (par.Length >= 4)
                                 float.TryParse(par[3], out a);
-
-                            if (a != 0)
-                                ;
 
                             var tex = new Vector3(float.Parse(par[1]), float.Parse(par[2]), a);
                             textures.Add(tex);
