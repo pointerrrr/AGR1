@@ -34,6 +34,7 @@ namespace template {
 
 		public void Init()
 		{
+			Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 			screen.Clear( 0x000000 );
 
 			tracer = new Raytracer(numThreads, Height, Width);

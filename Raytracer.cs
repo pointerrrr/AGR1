@@ -25,12 +25,12 @@ namespace template
             var texture3 = new Texture("../../assets/triangle.jpg");
             var objFile = "../../assets/basic_box.obj";
 
-            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(10000, 10000, 10000)));
+            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(10, 10, 10)));
 
-            Lights.Add(new Light(new Vector3(0, 0, -50), new Vector3(10000, 10000, 10000)));
-            Lights.Add(new Light(new Vector3(-30, 0, -10), new Vector3(10000, 10000, 10000)));
+            //Lights.Add(new Light(new Vector3(0, 0, -50), new Vector3(10000, 10000, 10000)));
+            //Lights.Add(new Light(new Vector3(-30, 0, -10), new Vector3(10000, 10000, 10000)));
 
-            Scene.AddRange(  ReadObj(objFile));
+            Scene.AddRange(  ReadObj(objFile, Matrix4.CreateScale(0.05f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0))));
 
             return;
             Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
@@ -118,7 +118,7 @@ namespace template
             foreach (var light in Lights)
             {
 
-                if (castShadowRay(light, nearest.Position + nearest.normal * 0.001f) || true)
+                if (castShadowRay(light, nearest.Position))
                 {
                     var distance = (light.Position - nearest.Position).Length;
                     var attenuation = 1f / (distance * distance);

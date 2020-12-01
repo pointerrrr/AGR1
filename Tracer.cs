@@ -62,7 +62,7 @@ namespace template
             return Skydome.Texture.Image[iu, iv];
         }
 
-        public List<Primitive> ReadObj(string path)
+        public List<Primitive> ReadObj(string path, Matrix4 transformation)
         {
             var vertices = new List<Vector3>();
             var triangles = new List<Primitive>();
@@ -80,7 +80,8 @@ namespace template
                     switch (par[0])
                     {
                         case "v":
-                            vertices.Add(new Vector3(float.Parse(par[1]), float.Parse(par[2]), float.Parse(par[3])));
+                            var vertex = new Vector3(float.Parse(par[1]), float.Parse(par[2]), float.Parse(par[3]));
+                            vertices.Add(Transform(vertex, transformation));
                             break;
                         case "f":
                             int index1 = int.Parse(par[1].Split('/')[0]) - 1;
