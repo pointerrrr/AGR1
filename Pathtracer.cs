@@ -68,7 +68,7 @@ namespace template
 
                     Vector3 tempRes = new Vector3();
 
-                    for(int i = 0; i < 100; i++)
+                    for(int i = 0; i < SamplesPerFrame; i++)
                     {
                         resultRaw[x, y] += TraceRay(ray, threadId, 0);
                     }
@@ -167,6 +167,7 @@ namespace template
             return TraceRay(reflection, threadId, ++recursionDepth) * intersection.primitive.Material.Reflectivity;
         }
 
+        // adapted from https://www.gamedev.net/forums/topic/683176-finding-a-random-point-on-a-sphere-with-spread-and-direction/5315747/
         private Vector3 DiffuseReflection(Vector3 Normal, int threadId)
         {
             /*
@@ -192,15 +193,15 @@ namespace template
             Vector3 b1 = Normalize(Cross(b3, different));
             Vector3 b2 = Cross(b1, b3);
 
-            float z = (float)random[threadId].NextDouble();
-            float r = (float)Math.Sqrt(1f - z * z);
+            double z = random[threadId].NextDouble();
+            double r = Math.Sqrt(1f - z * z);
 
-            float theta = (float)( random[threadId].NextDouble() * Math.PI * 2f - Math.PI);
+            double theta = random[threadId].NextDouble() * Math.PI * 2f - Math.PI;
 
-            float x = (float)(r * Math.Cos(theta));
-            float y = (float)(r * Math.Sin(theta));
+            double x = r * Math.Cos(theta);
+            double y = r * Math.Sin(theta);
 
-            return Normalize(x * b1 + y * b2 + z * b3);
+            return Normalize((float)x * b1 + (float)y * b2 + (float)z * b3);
         }
 
         private void MakeScene()
@@ -209,7 +210,7 @@ namespace template
             Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f, Albedo = new Vector3(0f, 01f, 0f) } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f, Albedo = new Vector3(1f, 0f, 0f), RefractionIndex = 1.5f } });
 
-            Scene.Add(new Sphere(new Vector3(0, 5, -10), 5) { Material = new Material {Emittance = new Vector3(500, 500, 500), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } } );
+            Scene.Add(new Sphere(new Vector3(0, 5, -10), 5) { Material = new Material {Emittance = new Vector3(50, 50, 50), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } } );
 
             Scene.Add(new Plane(new Vector3(0, -20, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1,1,1) } });
         }

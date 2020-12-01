@@ -8,6 +8,7 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using System.Threading;
+using static template.GlobalLib;
 
 namespace template {
 
@@ -80,7 +81,7 @@ namespace template {
 		private void startTracing(object mt)
         {
 			//raytracer.Trace(screen, (int) mt, numThreads);
-			pathtracer.samplesTaken += 100;
+			pathtracer.samplesTaken += SamplesPerFrame;
 			pathtracer.Trace(screen, (int)mt, numThreads);
 		}
 
