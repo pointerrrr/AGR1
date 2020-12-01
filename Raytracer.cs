@@ -23,6 +23,16 @@ namespace template
             var texture1 = new Texture("../../assets/checkers.png");
             var texture2 = new Texture("../../assets/globe.jpg");
             var texture3 = new Texture("../../assets/triangle.jpg");
+            var objFile = "../../assets/basic_box.obj";
+
+            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(10000, 10000, 10000)));
+
+            Lights.Add(new Light(new Vector3(0, 0, -50), new Vector3(10000, 10000, 10000)));
+            Lights.Add(new Light(new Vector3(-30, 0, -10), new Vector3(10000, 10000, 10000)));
+
+            Scene.AddRange(  ReadObj(objFile));
+
+            return;
             Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
@@ -30,7 +40,7 @@ namespace template
 
             Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture1 } });
 
-            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
+            
 
             Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
 
@@ -101,14 +111,14 @@ namespace template
 
             //TODO add skybox here
             if (nearest.primitive == null)
-                return Skybox(ray);
+                return new Vector3();
 
             var illumination = new Vector3();
 
             foreach (var light in Lights)
             {
 
-                if (castShadowRay(light, nearest.Position + nearest.normal * 0.001f))
+                if (castShadowRay(light, nearest.Position + nearest.normal * 0.001f) || true)
                 {
                     var distance = (light.Position - nearest.Position).Length;
                     var attenuation = 1f / (distance * distance);

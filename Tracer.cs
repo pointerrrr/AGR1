@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using OpenTK;
 using static template.GlobalLib;
 using static OpenTK.Vector3;
+using System.IO;
 
 namespace template
 {
@@ -59,6 +60,43 @@ namespace template
                 iv = 0;
             // return the color
             return Skydome.Texture.Image[iu, iv];
+        }
+
+        public List<Primitive> ReadObj(string path)
+        {
+            var vertices = new List<Vector3>();
+            var triangles = new List<Primitive>();
+            using (StreamReader streamReader = new StreamReader(path))
+            {
+                string line;
+                
+
+                while((line = streamReader.ReadLine()) != null)
+                {
+                    line = line.Trim();
+                    line = line.Replace("  ", " ");
+                    var par = line.Split(' ');
+
+                    switch (par[0])
+                    {
+                        case "v":
+                            vertices.Add(new Vector3(float.Parse(par[1]), float.Parse(par[2]), float.Parse(par[3])));
+                            break;
+                        case "f":
+                            int index1 = int.Parse(par[1].Split('/')[0]) - 1;
+                            int index2 = int.Parse(par[2].Split('/')[0]) - 1;
+                            int index3 = int.Parse(par[3].Split('/')[0]) - 1;
+                            triangles.Add(new Vertex(vertices[index1], vertices[index2], vertices[index3]) { Material = new Material { color = new Vector3(1,0,0)} });
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                streamReader.Close();
+
+            }
+
+            return triangles;
         }
     }
 
