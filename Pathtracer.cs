@@ -25,6 +25,9 @@ namespace template
 
         private void MakeScene()
         {
+            var texture1 = new Texture("../../assets/checkers.png");
+            var texture2 = new Texture("../../assets/globe.jpg");
+            var texture3 = new Texture("../../assets/triangle.jpg");
             /*Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 1f, Albedo = new Vector3(0f, 0f, 1f) } });
             Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f, Albedo = new Vector3(0f, 01f, 0f) } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f, Albedo = new Vector3(1f, 0f, 0f), RefractionIndex = 1.5f } });
@@ -38,7 +41,7 @@ namespace template
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
 
 
-            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), } });
+            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture1 } });
 
             //Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
             Scene.Add(new Sphere(new Vector3(0, 0, 5), 3) { Material = new Material { Emittance = new Vector3(100, 100, 100), IsLight = true } } );
@@ -47,8 +50,10 @@ namespace template
 
             Scene.Add(new Sphere(new Vector3(5, 0, -5), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 0.5f } });
 
-            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
-            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
+            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Texture = texture3 } });
+            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Texture = texture3 } });
+
+            Scene.Add(new Sphere(new Vector3(0, 0, -20), 5) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture2 } });
         }
 
         public override void Trace(Surface screen, int threadId, int numthreads)
@@ -175,7 +180,12 @@ namespace template
 
             float cos_theta = Dot(newDirection, nearest.normal);
 
-            Vector3 BRDF = nearest.primitive.Material.color / (float)Math.PI;
+            Vector3 BRDF;
+
+            if (nearest.primitive.Material.Texture != null)
+                BRDF = nearest.IntersectionColor / (float)Math.PI;
+            else
+                BRDF = nearest.primitive.Material.color / (float)Math.PI;
 
             Vector3 incoming = TraceRay(newRay, threadId, ++recursionDepth);
 

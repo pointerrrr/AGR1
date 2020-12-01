@@ -26,7 +26,7 @@ namespace template
             Width = width;
             AspectRatio = width / ((float)height);
             Camera = new Camera(new Vector3(), new Vector3(0, 0, -1), AspectRatio);
-            Skydome = new Skybox("../../assets/stpeters_probe.jpg");
+            Skydome = new Skybox("../../assets/skydome.png");
             result = new int[Width, Height];
         }
 
@@ -60,5 +60,27 @@ namespace template
             // return the color
             return Skydome.Texture.Image[iu, iv];
         }
+    }
+
+    public class Ray
+    {
+        public float length = float.PositiveInfinity;
+
+        public Vector3 direction;
+        public Vector3 position;
+        public Vector3 color;
+    }
+
+    public class Intersection
+    {
+        public Ray ray;
+        public Primitive primitive;
+        public Vector3 normal;
+        public Vector3 Position;
+
+        public float length;
+
+        public Vector3 IntersectionColor;
+
     }
 }

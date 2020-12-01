@@ -20,19 +20,25 @@ namespace template
 
         private void MakeScene()
         {
+            var texture1 = new Texture("../../assets/checkers.png");
+            var texture2 = new Texture("../../assets/globe.jpg");
+            var texture3 = new Texture("../../assets/triangle.jpg");
             Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
 
 
-            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), } });
+            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture1 } });
 
             Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
 
             Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
 
-            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
-            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
+            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0, Texture = texture3 } });
+            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0, Texture = texture3 } });
+
+
+            Scene.Add(new Sphere(new Vector3(0, 0, -20), 5) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture2 } });
         }
 
         public override void Trace(Surface screen, int threadId, int numthreads)
@@ -147,6 +153,8 @@ namespace template
                     refractColor = TraceRay(new Ray() { direction = Normalize(snell * ray.direction + (snell * thetaOne - (float)Math.Sqrt(internalReflection)) * primitiveNormal), position = nearest.Position + ray.direction * 0.002f }, threadId, recursionDepth++);
             }
 
+            if (nearest.primitive.Material.Texture != null)
+                return nearest.IntersectionColor * (1 - nearest.primitive.Material.Reflectivity) * illumination + reflectColor + refractColor; ;
             return nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) * illumination + reflectColor + refractColor;
         }
 
@@ -183,35 +191,7 @@ namespace template
         }
     }
 
-    public class Ray
-    {
-        public float length = float.PositiveInfinity;
-
-        public Vector3 direction;
-        public Vector3 position;
-        public Vector3 color;
-    }
-
-    public class Intersection
-    {
-        public Ray ray;
-        public Primitive primitive;
-        public Vector3 normal;
-        public Vector3 Position;
-
-        public float length;
-
-    }
-
-    public class Material
-    {
-        public Vector3 color;
-        public Vector3 Emittance;
-        public bool IsLight;
-        public float Reflectivity;
-        public float RefractionIndex;
-        public Vector3 Albedo;
-    }
+    
 
     public class Light
     {
@@ -229,44 +209,5 @@ namespace template
     // TODO
   
 
-    // skybox for when rays hit nothing
-    public class Skybox
-    {
-        public Texture Texture { get; set; }
-
-        // initialize texture via string
-        public Skybox(string path)
-        {
-            Texture = new Texture(path);
-        }
-    }
-
-    // texture for all primitives
-    public class Texture
-    {
-        // 2d-array of vector3's to make the image accesible in multiple threads
-        public Vector3[,] Image { get; set; }
-        // bitmap used for final texture (changes the Image array when the bitmap is changed as well)
-        public Bitmap Bitmap
-        {
-            get { return Bitmap; }
-            set
-            {
-                Image = new Vector3[value.Width, value.Height];
-                for (int i = 0; i < value.Width; i++)
-                    for (int j = 0; j < value.Height; j++)
-                    {
-                        Color color = value.GetPixel(i, j);
-                        Image[i, j] = new Vector3((float)color.R / 255, (float)color.G / 255, (float)color.B / 255);
-                    }
-            }
-        }
-
-        // initialize texture via string
-        public Texture(string path)
-        {
-            Bitmap image = new Bitmap(path);
-            Bitmap = image;
-        }
-    }
+    
 }
