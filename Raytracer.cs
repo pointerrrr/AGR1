@@ -23,14 +23,17 @@ namespace template
             var texture1 = new Texture("../../assets/checkers.png");
             var texture2 = new Texture("../../assets/globe.jpg");
             var texture3 = new Texture("../../assets/triangle.jpg");
+            var texture4 = new Texture("../../assets/capsule0.jpg");
+            var texture5 = new Texture("../../assets/kunai.png");
+            var texture6 = new Texture("../../assets/fractal.jpg");
             var objFile = "../../assets/basic_box.obj";
 
-            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(10, 10, 10)));
+            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
 
             //Lights.Add(new Light(new Vector3(0, 0, -50), new Vector3(10000, 10000, 10000)));
             //Lights.Add(new Light(new Vector3(-30, 0, -10), new Vector3(10000, 10000, 10000)));
 
-            Scene.AddRange(  ReadObj(objFile, Matrix4.CreateScale(0.05f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0))));
+            Scene.AddRange(  ReadObj(objFile, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), texture6));
 
             return;
             Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });

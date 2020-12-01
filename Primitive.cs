@@ -123,6 +123,7 @@ namespace template
 
             if(Material.Texture != null)
             {
+                // tilt the plane for easy texture coordinate calculation
                 Vector3 temp = intersection.Position - intersection.normal * intersection.Position.Y;
                 float x, y;
                 x = (temp.X + 10000) % 1;
@@ -142,7 +143,7 @@ namespace template
     // adapted from https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
     public class Vertex : Primitive
     {
-        public Vector3 Point1, Point2, Point3, Normal;
+        public Vector3 Point1, Point2, Point3, Normal, Tex1, Tex2, Tex3;
 
         public Vertex(Vector3 p1, Vector3 p2, Vector3 p3)
         {
@@ -151,6 +152,19 @@ namespace template
             Point3 = p3;
 
             Normal = Normalize( Cross(p2 - p1, p3 - p1));
+        }
+
+        public Vertex(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 t1, Vector3 t2, Vector3 t3)
+        {
+            Point1 = p1;
+            Point2 = p2;
+            Point3 = p3;
+
+            Tex1 = t1;
+            Tex2 = t2;
+            Tex3 = t3;
+
+            Normal = Normalize(Cross(p2 - p1, p3 - p1));
         }
 
         public override Intersection Intersect(Ray ray)
@@ -193,21 +207,40 @@ namespace template
 
             if (Material.Texture != null)
             {
-                Vector3 temp = intersection.Position - intersection.normal * intersection.Position.Y;
-                float x, y;
-                x = (temp.X + 10000) % 1;
-                y = (temp.Z + 10000) % 1;
-                if (x >= 1 || x < 0)
-                    x = 0;
-                if (y >= 1 || y < 0)
-                    y = 0;
+                var barycentric = getBarycentricCoordinatesAt(intersection.Position);
+
+                // adapted from https://computergraphics.stackexchange.com/questions/1866/how-to-map-square-texture-to-triangle
+
+                var texturelocation = barycentric.X * Tex1 + barycentric.Y * Tex2 + barycentric.Z * Tex3;
+
+                float x = Math.Abs(texturelocation.X % 1);
+                float y = Math.Abs( texturelocation.Y % 1);
+
+
 
                 intersection.IntersectionColor = Material.Texture.Image[(int)(Material.Texture.Image.GetLength(0) * x), (int)(Material.Texture.Image.GetLength(1) * y)];
             }
 
             return intersection;
         }
-    }
+
+        // adapted from https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
+        private Vector3 getBarycentricCoordinatesAt( Vector3 pos )
+        {
+            Vector3 bary = new Vector3();
+
+            // The area of a triangle is 
+            float areaABC = Dot(Normal, Cross(Point2 - Point1, Point3 - Point1));
+            float areaPBC = Dot(Normal, Cross(Point2 - pos, Point3 - pos));
+            float areaPCA = Dot(Normal, Cross(Point3 - pos, Point1 - pos));
+
+            bary.X = areaPBC / areaABC ; // alpha
+            bary.Y = areaPCA / areaABC ; // beta
+            bary.Z = 1.0f - bary.X - bary.Y ; // gamma
+
+            return bary;
+        }
+}
 
     public class Torus : Primitive
     {
