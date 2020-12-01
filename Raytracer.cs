@@ -11,29 +11,31 @@ using static template.GlobalLib;
 
 namespace template
 {
-    public class Raytracer
+    public class Raytracer : Tracer
     {
-        public Camera Camera;
-        public List<Primitive> Scene = new List<Primitive>();
-        public List<Light> Lights = new List<Light>();
-        public Skybox Skydome;
-        public int[,] result;
-        public int Height, Width;
-        public float AspectRatio;
-
-        public Raytracer(int numThreads, int height = 512, int width = 512)
+        public Raytracer(int numThreads, int height = 512, int width = 512) : base(numThreads, height, width)
         {
-            Height = height;
-            Width = width;
-            AspectRatio = width / ((float) height);
-            Camera = new Camera(new Vector3(), new Vector3(0,0,-1), AspectRatio);
-            Skydome = new Skybox("../../assets/stpeters_probe.jpg");
-            result = new int[Width, Height];
-            
             MakeScene();
         }
 
-        public void Trace(Surface screen, int threadId, int numthreads)
+        private void MakeScene()
+        {
+            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
+
+
+            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), } });
+
+            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
+
+            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
+
+            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
+            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
+        }
+
+        public override void Trace(Surface screen, int threadId, int numthreads)
         {
             int sqr = (int)Math.Sqrt(numthreads);
             int fromX = (threadId % sqr) * Width / sqr;
@@ -49,22 +51,22 @@ namespace template
 
                     Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
                     Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
-                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width  * x + vertical / Height * y;
+                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width * x + vertical / Height * y;
 
                     Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
                     rotation *= Matrix4.CreateRotationY(Camera.YRotation);
                     Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
 
                     pixelLocation = Transform(pixelLocation, rotation);
-                    pixelLocation = Transform(pixelLocation, translation);                    
+                    pixelLocation = Transform(pixelLocation, translation);
 
                     ray.direction = Normalize(pixelLocation - Camera.Position);
-                    result[x, y] = VecToInt(TraceRay(ray));
+                    result[x, y] = VecToInt(TraceRay(ray, threadId));
                 }
             }
         }
 
-        private Vector3 TraceRay(Ray ray, int recursionDepth = 0)
+        protected override Vector3 TraceRay(Ray ray, int threadId, int recursionDepth = 0)
         {
             Vector3 reflectColor = new Vector3();
             Vector3 refractColor = new Vector3();
@@ -93,7 +95,7 @@ namespace template
                 if (castShadowRay(light, nearest.Position + nearest.normal * 0.001f))
                 {
                     var distance = (light.Position - nearest.Position).Length;
-                    var attenuation = 1f /  (distance * distance);
+                    var attenuation = 1f / (distance * distance);
                     var nDotL = Dot(nearest.normal, Normalize(light.Position - nearest.Position));
 
                     if (nDotL < 0)
@@ -104,10 +106,10 @@ namespace template
             }
             if (nearest.primitive.Material.Reflectivity != 0)
             {
-                reflectColor = reflect(ray, nearest, recursionDepth);
+                reflectColor = reflect(ray, nearest, recursionDepth, threadId);
             }
 
-            if(nearest.primitive.Material.RefractionIndex != 0)
+            if (nearest.primitive.Material.RefractionIndex != 0)
             {
                 float refractionCurrentMaterial = 1.00027717f;
                 float refractionIndexNextMaterial = nearest.primitive.Material.RefractionIndex;
@@ -130,22 +132,12 @@ namespace template
                 float internalReflection = 1 - snell * snell * (1 - thetaOne * thetaOne);
 
                 if (internalReflection < 0)
-                    refractColor = reflect(ray, nearest, recursionDepth);
+                    refractColor = reflect(ray, nearest, recursionDepth, threadId);
                 else
-                    refractColor = TraceRay(new Ray() { direction = Normalize(snell * ray.direction + (snell * thetaOne - (float)Math.Sqrt(internalReflection)) * primitiveNormal), position = nearest.Position + ray.direction * 0.002f }, recursionDepth++);
+                    refractColor = TraceRay(new Ray() { direction = Normalize(snell * ray.direction + (snell * thetaOne - (float)Math.Sqrt(internalReflection)) * primitiveNormal), position = nearest.Position + ray.direction * 0.002f }, threadId, recursionDepth++);
             }
 
-
             return nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) * illumination + reflectColor + refractColor;
-        }
-
-        
-
-        private Vector3 reflect(Ray ray, Intersection intersection, int recursionDepth)
-        {
-            var reflectionRay = Normalize(ReflectRay(ray.direction, intersection.normal));
-            Ray reflection = new Ray() { direction = reflectionRay, position = intersection.Position + reflectionRay * 0.0001f };
-            return TraceRay(reflection, ++recursionDepth) * intersection.primitive.Material.Reflectivity;
         }
 
         private bool castShadowRay(Light light, Vector3 position)
@@ -160,26 +152,6 @@ namespace template
             return true;
         }
         
-        
-
-        private void MakeScene()
-        {
-            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
-
-            
-            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1,1,1), } });
-
-            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
-
-            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
-
-            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
-            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
-        }
-
-
         private Vector3 Skybox(Ray ray)
         {
             // flipping the image

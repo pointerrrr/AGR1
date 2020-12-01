@@ -9,37 +9,32 @@ using static template.GlobalLib;
 
 namespace template
 {
-    class Pathtracer
+    class Pathtracer : Tracer
     {
-        public Camera Camera;
-        public List<Primitive> Scene = new List<Primitive>();
-
-        public int[,] result;
         public Vector3[,] resultRaw;
-        public int Height, Width;
-        public float AspectRatio;
-        public Skybox Skydome;
-        public int samplesTaken = 0;
-
         Random[] random;
 
-        public Pathtracer(int numThreads, int height = 512, int width = 512)
+        public Pathtracer(int numThreads, int height = 512, int width = 512) : base (numThreads, height, width)
         {
+            resultRaw = new Vector3[Width, Height];
             random = new Random[numThreads];
             for (int i = 0; i < numThreads; i++)
                 random[i] = new Random();
-            Height = height;
-            Width = width;
-            AspectRatio = width / ((float)height);
-            Camera = new Camera(new Vector3(), new Vector3(0, 0, -1), AspectRatio);
-            Skydome = new Skybox("../../assets/stpeters_probe.jpg");
-            result = new int[Width, Height];
-            resultRaw = new Vector3[Width, Height];
-
             MakeScene();
         }
 
-        public void Trace(Surface screen, int threadId, int numthreads)
+        private void MakeScene()
+        {
+            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 1f, Albedo = new Vector3(0f, 0f, 1f) } });
+            Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f, Albedo = new Vector3(0f, 01f, 0f) } });
+            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f, Albedo = new Vector3(1f, 0f, 0f), RefractionIndex = 1.5f } });
+
+            Scene.Add(new Sphere(new Vector3(0, 5, -10), 5) { Material = new Material { Emittance = new Vector3(50, 50, 50), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } });
+
+            Scene.Add(new Plane(new Vector3(0, -20, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1, 1, 1) } });
+        }
+
+        public override void Trace(Surface screen, int threadId, int numthreads)
         {
             int sqr = (int)Math.Sqrt(numthreads);
             int fromX = (threadId % sqr) * Width / sqr;
@@ -73,18 +68,18 @@ namespace template
                         resultRaw[x, y] += TraceRay(ray, threadId, 0);
                     }
 
-                    result[x, y] = VecToInt(resultRaw[x, y] / samplesTaken);
+                    result[x, y] = VecToInt(resultRaw[x, y] / SamplesTaken);
                 }
             }
         }
 
         public void Clear()
         {
-            samplesTaken = 0;
+            SamplesTaken = 0;
             resultRaw = new Vector3[Width, Height];
         }
 
-        public Vector3 TraceRay(Ray ray, int threadId, int recursionDepth = 0)
+        protected override Vector3 TraceRay(Ray ray, int threadId, int recursionDepth = 0)
         {
             if (recursionDepth > MaxRecursion)
                 return new Vector3();
@@ -138,7 +133,7 @@ namespace template
                 float internalReflection = 1 - snell * snell * (1 - thetaOne * thetaOne);
 
                 if (internalReflection < 0)
-                    return reflect(ray, nearest, threadId, recursionDepth);
+                    return Reflect(ray, nearest, threadId, recursionDepth);
                 else
                     return TraceRay(new Ray() { direction = Normalize(snell * ray.direction + (snell * thetaOne - (float)Math.Sqrt(internalReflection)) * primitiveNormal), position = nearest.Position + ray.direction * 0.002f }, threadId, recursionDepth++);
             }
@@ -160,7 +155,7 @@ namespace template
             //return (float)Math.PI * 2f * BRDF + Ei;
         }
 
-        private Vector3 reflect(Ray ray, Intersection intersection, int threadId, int recursionDepth)
+        protected Vector3 Reflect(Ray ray, Intersection intersection, int threadId, int recursionDepth)
         {
             var reflectionRay = Normalize(ReflectRay(ray.direction, intersection.normal));
             Ray reflection = new Ray() { direction = reflectionRay, position = intersection.Position + reflectionRay * 0.0001f };
@@ -168,7 +163,7 @@ namespace template
         }
 
         // adapted from https://www.gamedev.net/forums/topic/683176-finding-a-random-point-on-a-sphere-with-spread-and-direction/5315747/
-        private Vector3 DiffuseReflection(Vector3 Normal, int threadId)
+        Vector3 DiffuseReflection(Vector3 Normal, int threadId)
         {
             /*
             var Random = new Random();
@@ -202,17 +197,6 @@ namespace template
             double y = r * Math.Sin(theta);
 
             return Normalize((float)x * b1 + (float)y * b2 + (float)z * b3);
-        }
-
-        private void MakeScene()
-        {
-            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 1f, Albedo = new Vector3(0f, 0f, 1f) } });
-            Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f, Albedo = new Vector3(0f, 01f, 0f) } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f, Albedo = new Vector3(1f, 0f, 0f), RefractionIndex = 1.5f } });
-
-            Scene.Add(new Sphere(new Vector3(0, 5, -10), 5) { Material = new Material {Emittance = new Vector3(50, 50, 50), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } } );
-
-            Scene.Add(new Plane(new Vector3(0, -20, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1,1,1) } });
         }
 
         private Vector3 Skybox(Ray ray)
