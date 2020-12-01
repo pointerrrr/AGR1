@@ -47,13 +47,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Camera.cs" />
-    <Compile Include="Constants.cs" />
+    <Compile Include="GlobalLib.cs" />
     <Compile Include="game.cs" />
+    <Compile Include="Pathtracer.cs" />
     <Compile Include="Primitive.cs" />
     <Compile Include="Raytracer.cs" />
     <Compile Include="surface.cs" />
     <Compile Include="template.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Texture.cs" />
+    <Compile Include="Tracer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

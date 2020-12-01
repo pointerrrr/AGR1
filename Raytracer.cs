@@ -5,34 +5,41 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
 using System.Drawing;
-using static OpenTK.Vector3;
 using System.Threading;
+using static OpenTK.Vector3;
+using static template.GlobalLib;
 
 namespace template
 {
-    public class Raytracer
+    public class Raytracer : Tracer
     {
-        public Camera Camera;
-        public List<Primitive> Scene = new List<Primitive>();
-        public List<Light> Lights = new List<Light>();
-        public Skybox Skydome;
-        public int[,] result;
-        public int Height, Width;
-        public float AspectRatio;
-
-        public Raytracer(int numThreads, int height = 512, int width = 512)
+        public Raytracer(int numThreads, int height = 512, int width = 512) : base(numThreads, height, width)
         {
-            Height = height;
-            Width = width;
-            AspectRatio = width / ((float) height);
-            Camera = new Camera(new Vector3(), new Vector3(0,0,-1), AspectRatio);
-            Skydome = new Skybox("../../assets/stpeters_probe.jpg");
-            result = new int[Width, Height];
-            
             MakeScene();
         }
 
-        public void Trace(Surface screen, int threadId, int numthreads)
+        private void MakeScene()
+        {
+            var objFile1 = "../../assets/basic_box.obj";
+            var objFile2 = "../../assets/less_basic_box.obj";
+
+            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(75, 75, 75)));
+            Lights.Add(new Light(new Vector3(1, 6, -1), new Vector3(50, 25, 25)));
+
+            // texture taken from https://mossandfog.com/expand-your-mind-with-these-intricate-fractals/
+            Scene.AddRange(ReadObj(objFile1, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/fractal.jpg")));
+            // texture taken from https://www.clay-and-paint.com/en/texture-plates/30-cernit-texture-plates.html
+            Scene.AddRange(ReadObj(objFile2, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/square.jpg")));
+
+            Scene.Add(new Vertex(new Vector3(-3, 3, -8), new Vector3(-3, -3, -8), new Vector3(3, 3, -8)) { Material = new Material { Reflectivity = 1, color = new Vector3(1, 1, 1) } });
+            Scene.Add(new Vertex(new Vector3(3, -3, -8), new Vector3(3, 3, -8), new Vector3(-3, 3, -8)) { Material = new Material { Reflectivity = 1, color = new Vector3(1, 1, 1) } });
+
+            Scene.Add(new Sphere(new Vector3(-3, 2, 5), 1.3f) { Material = new Material { color = new Vector3(0.4f, 0.3f, 0.3f), RefractionIndex = 1.453f } });
+            
+            return;
+        }
+
+        public override void Trace(Surface screen, int threadId, int numthreads)
         {
             int sqr = (int)Math.Sqrt(numthreads);
             int fromX = (threadId % sqr) * Width / sqr;
@@ -43,31 +50,40 @@ namespace template
             {
                 for (int y = fromY; y < toY; y++)
                 {
-                    Ray ray = new Ray();
-                    ray.position = Camera.Position;
+                    Vector3 aaResult = new Vector3();
+                    float AAsqrt = (float)Math.Sqrt(AA);
+                    for (float aax = 0; aax < AAsqrt; aax++)
+                    {
+                        for (float aay = 0; aay < AAsqrt; aay++)
+                        {
+                            Ray ray = new Ray();
+                            ray.position = Camera.Position;
 
-                    Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
-                    Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
-                    Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width  * x + vertical / Height * y;
+                            Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
+                            Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
+                            Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width * (x + aax * (1f/AAsqrt) - 0.5f) + vertical / Height * (y + aay * ( 1f/AAsqrt) - 0.5f);
 
-                    Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
-                    rotation *= Matrix4.CreateRotationY(Camera.YRotation);
-                    Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
+                            Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
+                            rotation *= Matrix4.CreateRotationY(Camera.YRotation);
+                            Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
 
-                    pixelLocation = Transform(pixelLocation, rotation);
-                    pixelLocation = Transform(pixelLocation, translation);                    
+                            pixelLocation = Transform(pixelLocation, rotation);
+                            pixelLocation = Transform(pixelLocation, translation);
 
-                    ray.direction = Normalize(pixelLocation - Camera.Position);
-                    result[x, y] = VecToInt(TraceRay(ray));
+                            ray.direction = Normalize(pixelLocation - Camera.Position);
+                            aaResult += TraceRay(ray, threadId);
+                        }
+                    }
+                    aaResult /= AA;
+                    result[x, y] = VecToInt(aaResult);
                 }
             }
         }
 
-        private Vector3 TraceRay(Ray ray, int recursionDepth = 0)
+        protected override Vector3 TraceRay(Ray ray, int threadId, int recursionDepth = 0)
         {
             Vector3 reflectColor = new Vector3();
             Vector3 refractColor = new Vector3();
-
 
             if (recursionDepth > 10)
                 return new Vector3();
@@ -80,7 +96,6 @@ namespace template
                     nearest = intersection;
             }
 
-            //TODO add skybox here
             if (nearest.primitive == null)
                 return Skybox(ray);
 
@@ -89,10 +104,10 @@ namespace template
             foreach (var light in Lights)
             {
 
-                if (castShadowRay(light, nearest.Position + nearest.normal * 0.001f))
+                if (castShadowRay(light, nearest.Position))
                 {
                     var distance = (light.Position - nearest.Position).Length;
-                    var attenuation = 1f /  (distance * distance);
+                    var attenuation = 1f / (distance * distance);
                     var nDotL = Dot(nearest.normal, Normalize(light.Position - nearest.Position));
 
                     if (nDotL < 0)
@@ -103,10 +118,10 @@ namespace template
             }
             if (nearest.primitive.Material.Reflectivity != 0)
             {
-                reflectColor = reflect(ray, nearest, recursionDepth);
+                reflectColor = reflect(ray, nearest, recursionDepth, threadId);
             }
 
-            if(nearest.primitive.Material.RefractionIndex != 0)
+            if (nearest.primitive.Material.RefractionIndex != 0)
             {
                 float refractionCurrentMaterial = 1.00027717f;
                 float refractionIndexNextMaterial = nearest.primitive.Material.RefractionIndex;
@@ -129,22 +144,17 @@ namespace template
                 float internalReflection = 1 - snell * snell * (1 - thetaOne * thetaOne);
 
                 if (internalReflection < 0)
-                    refractColor = reflect(ray, nearest, recursionDepth);
+                    refractColor = reflect(ray, nearest, recursionDepth, threadId);
                 else
-                    refractColor = TraceRay(new Ray() { direction = Normalize(snell * ray.direction + (snell * thetaOne - (float)Math.Sqrt(internalReflection)) * primitiveNormal), position = nearest.Position + ray.direction * 0.002f }, recursionDepth++);
+                    refractColor = TraceRay(new Ray() { direction = Normalize(snell * ray.direction + (snell * thetaOne - (float)Math.Sqrt(internalReflection)) * primitiveNormal), position = nearest.Position + ray.direction * 0.002f }, threadId, recursionDepth++);
             }
 
-
+            if (nearest.primitive.Material.Texture != null)
+            {
+                nearest.primitive.GetTexture(nearest);
+                return nearest.IntersectionColor * (1 - nearest.primitive.Material.Reflectivity) * illumination + reflectColor + refractColor; ;
+            }
             return nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) * illumination + reflectColor + refractColor;
-        }
-
-        
-
-        private Vector3 reflect(Ray ray, Intersection intersection, int recursionDepth)
-        {
-            var reflectionRay = Normalize(reflectRay(ray.direction, intersection.normal));
-            Ray reflection = new Ray() { direction = reflectionRay, position = intersection.Position + reflectionRay * 0.0001f };
-            return TraceRay(reflection, ++recursionDepth) * intersection.primitive.Material.Reflectivity;
         }
 
         private bool castShadowRay(Light light, Vector3 position)
@@ -159,84 +169,27 @@ namespace template
             return true;
         }
         
-        private Vector3 reflectRay(Vector3 rayDirection, Vector3 normal)
-        {
-            return rayDirection - 2 * Dot(rayDirection, normal) * normal;
-        }
-
-        private int VecToInt(Vector3 vector)
-        {
-            int R = vector.X > 1 ? 255 : (int)(vector.X * 255);
-            int G = vector.Y > 1 ? 255 : (int)(vector.Y * 255);
-            int B = vector.Z > 1 ? 255 : (int)(vector.Z * 255);
-            return (R << 16) + (G << 8) + B;
-        }
-
-        private void MakeScene()
-        {
-            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
-
-            
-            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1,1,1), } });
-
-            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
-
-            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
-
-            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
-            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0 } });
-        }
-
-
         private Vector3 Skybox(Ray ray)
         {
-            // flipping the image
-            Vector3 d = -ray.direction;
-            float r = (float)((1d / Math.PI) * Math.Acos(d.Z) / Math.Sqrt(d.X * d.X + d.Y * d.Y));
-            // find the coordinates
-            float u = r * d.X + 1;
-            float v = r * d.Y + 1;
-            // scale the coordinates to image size
-            int iu = (int)(u * Skydome.Texture.Image.GetLength(0) / 2);
-            int iv = (int)(v * Skydome.Texture.Image.GetLength(1) / 2);
-            // fail safe to make sure we're inside of the image coordinates
+            // sphere texturing, adapted from http://www.pauldebevec.com/Probes/
+            var direction = -ray.direction;
+            float r = (float)(1d / Math.PI * Math.Acos(direction.Z) / Math.Sqrt(direction.X * direction.X + direction.Y * direction.Y));
+            
+            float x = r * direction.X + 1;
+            float y = r * direction.Y + 1;
+            
+            int iu = (int)(x * Skydome.Texture.Image.GetLength(0) / 2);
+            int iv = (int)(y * Skydome.Texture.Image.GetLength(1) / 2);
+            
             if (iu >= Skydome.Texture.Image.GetLength(0) || iu < 0)
                 iu = 0;
             if (iv >= Skydome.Texture.Image.GetLength(1) || iv < 0)
                 iv = 0;
-            // return the color
             return Skydome.Texture.Image[iu, iv];
         }
     }
 
-    public class Ray
-    {
-        public float length = float.PositiveInfinity;
-
-        public Vector3 direction;
-        public Vector3 position;
-        public Vector3 color;
-    }
-
-    public class Intersection
-    {
-        public Ray ray;
-        public Primitive primitive;
-        public Vector3 normal;
-        public Vector3 Position;
-
-        public float length;
-
-    }
-
-    public class Material
-    {
-        public Vector3 color;
-        public float Reflectivity;
-        public float RefractionIndex;
-    }
+    
 
     public class Light
     {
@@ -254,44 +207,5 @@ namespace template
     // TODO
   
 
-    // skybox for when rays hit nothing
-    public class Skybox
-    {
-        public Texture Texture { get; set; }
-
-        // initialize texture via string
-        public Skybox(string path)
-        {
-            Texture = new Texture(path);
-        }
-    }
-
-    // texture for all primitives
-    public class Texture
-    {
-        // 2d-array of vector3's to make the image accesible in multiple threads
-        public Vector3[,] Image { get; set; }
-        // bitmap used for final texture (changes the Image array when the bitmap is changed as well)
-        public Bitmap Bitmap
-        {
-            get { return Bitmap; }
-            set
-            {
-                Image = new Vector3[value.Width, value.Height];
-                for (int i = 0; i < value.Width; i++)
-                    for (int j = 0; j < value.Height; j++)
-                    {
-                        Color color = value.GetPixel(i, j);
-                        Image[i, j] = new Vector3((float)color.R / 255, (float)color.G / 255, (float)color.B / 255);
-                    }
-            }
-        }
-
-        // initialize texture via string
-        public Texture(string path)
-        {
-            Bitmap image = new Bitmap(path);
-            Bitmap = image;
-        }
-    }
+    
 }

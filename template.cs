@@ -6,6 +6,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
+using static template.GlobalLib;
  
 namespace template
 {
@@ -21,9 +22,9 @@ namespace template
 			GL.ClearColor( Color.Black );
 			GL.Enable( EnableCap.Texture2D );
 			GL.Hint( HintTarget.PerspectiveCorrectionHint, HintMode.Nicest );
-			ClientSize = new Size( width, height );
-			game = new Game(width, height);
-			game.screen = new Surface(width, height);
+			ClientSize = new Size( GlobalLib.Width, GlobalLib.Height);
+			game = new Game(GlobalLib.Width, GlobalLib.Height);
+			game.screen = new Surface(GlobalLib.Width, GlobalLib.Height);
 			Sprite.target = game.screen;
 			screenID = game.screen.GenTexture();
 			game.Init();

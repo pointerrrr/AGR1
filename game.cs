@@ -8,13 +8,14 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using System.Threading;
+using static template.GlobalLib;
 
 namespace template {
 
 	class Game
 	{
 		public Surface screen;
-		public Raytracer raytracer;
+		public Tracer tracer;
 		int[,] pixels;
 		int numThreads = 9;
 		Thread[] t;
@@ -33,13 +34,14 @@ namespace template {
 
 		public void Init()
 		{
+			Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 			screen.Clear( 0x000000 );
 
-			raytracer = new Raytracer(numThreads, Height, Width);
+			tracer = new Raytracer(numThreads, Height, Width);
+			//tracer = new Pathtracer(numThreads, Height, Width);
 			t = new Thread[numThreads];
 			Trace();
 			Draw();
-			
 		}
 
 		public void Tick()
@@ -69,14 +71,16 @@ namespace template {
 			{
 				for (int j = 0; j < Height; j++)
 				{
-					screen.Pixel(i, j, raytracer.result[i, j]);
+					screen.Pixel(i, j, tracer.result[i, j]);
 				}
 			}
 		}
 
 		private void startTracing(object mt)
         {
-			raytracer.Trace(screen, (int) mt, numThreads);
+			//raytracer.Trace(screen, (int) mt, numThreads);
+			tracer.SamplesTaken += SamplesPerFrame;
+			tracer.Trace(screen, (int)mt, numThreads);
 		}
 
 		public void Render()
@@ -87,7 +91,7 @@ namespace template {
 		public void Controls(KeyboardState key)
         {
 			float movementDistance = 0.25f;
-			var camera = raytracer.Camera;
+			var camera = tracer.Camera;
 			currentKeyState = key;
 			bool keyPressed = false;
 			if (currentKeyState[Key.W])
@@ -144,22 +148,36 @@ namespace template {
 
 			if (currentKeyState[Key.BracketLeft])
 			{
-				camera.FOV = raytracer.Camera.FOV + 5 > 160 ? 160 : camera.FOV + 5;
+				camera.FOV = tracer.Camera.FOV + 5 > 160 ? 160 : camera.FOV + 5;
 				camera.UpdateScreen();
 				keyPressed = true;
 			}
 			if (currentKeyState[Key.BracketRight])
 			{
-				camera.FOV = raytracer.Camera.FOV - 5 < 20 ? 20 : camera.FOV - 5;
+				camera.FOV = tracer.Camera.FOV - 5 < 20 ? 20 : camera.FOV - 5;
 				camera.UpdateScreen();
 				keyPressed = true;
 			}
 			prevKeyState = key;
-            if (keyPressed)
+
+			var pathTracer = tracer as Pathtracer;
+
+			if(pathTracer != null)
+            {
+				if (keyPressed)
+				{
+
+					pathTracer.Clear();
+
+				}
+				Trace();
+				Draw();
+			}
+			else if (keyPressed)
             {
 				Trace();
 				Draw();
-            }			
+			}
 		}
 
 		private bool checkNewKeyPress(Key key)
