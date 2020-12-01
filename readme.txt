@@ -21,3 +21,7 @@ References:
 •	Triangle texturing from https://computergraphics.stackexchange.com/questions/1866/how-to-map-square-texture-to-triangle
 •	Efficient barycentric coordinates for triangle texturing from  https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
 
+Additional notes:
+•   To switch from raytracing to path tracing (and vice versa) outcomment line 40 and uncomment line 41 in game.cs
+•   To change the FOV, edit line 17 of GlobalLib.cs
+•   To change the aspect ratio, edit line 18 of GlobalLib.cs (the Width and Height parameters are the dimensions of the screen in pixels, the aspect ratio will be calculated properly and the image will look natural)
