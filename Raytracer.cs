@@ -20,38 +20,23 @@ namespace template
 
         private void MakeScene()
         {
-            var texture1 = new Texture("../../assets/checkers.png");
-            var texture2 = new Texture("../../assets/globe.jpg");
-            var texture3 = new Texture("../../assets/triangle.jpg");
-            var texture4 = new Texture("../../assets/capsule0.jpg");
-            var texture5 = new Texture("../../assets/kunai.png");
-            var texture6 = new Texture("../../assets/fractal.jpg");
-            var objFile = "../../assets/basic_box.obj";
+            var objFile1 = "../../assets/basic_box.obj";
+            var objFile2 = "../../assets/less_basic_box.obj";
 
-            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
+            Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(75, 75, 75)));
+            Lights.Add(new Light(new Vector3(1, 6, -1), new Vector3(50, 25, 25)));
 
-            //Lights.Add(new Light(new Vector3(0, 0, -50), new Vector3(10000, 10000, 10000)));
-            //Lights.Add(new Light(new Vector3(-30, 0, -10), new Vector3(10000, 10000, 10000)));
+            // texture taken from https://mossandfog.com/expand-your-mind-with-these-intricate-fractals/
+            Scene.AddRange(ReadObj(objFile1, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/fractal.jpg")));
+            // texture taken from https://www.clay-and-paint.com/en/texture-plates/30-cernit-texture-plates.html
+            Scene.AddRange(ReadObj(objFile2, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/square.jpg")));
 
-            Scene.AddRange(  ReadObj(objFile, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), texture6));
+            Scene.Add(new Vertex(new Vector3(-3, 3, -8), new Vector3(-3, -3, -8), new Vector3(3, 3, -8)) { Material = new Material { Reflectivity = 1, color = new Vector3(1, 1, 1) } });
+            Scene.Add(new Vertex(new Vector3(3, -3, -8), new Vector3(3, 3, -8), new Vector3(-3, 3, -8)) { Material = new Material { Reflectivity = 1, color = new Vector3(1, 1, 1) } });
 
-            return;
-            Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
-
-
-            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture1 } });
-
+            Scene.Add(new Sphere(new Vector3(-3, 2, 5), 1.3f) { Material = new Material { color = new Vector3(0.4f, 0.3f, 0.3f), RefractionIndex = 1.453f } });
             
-
-            Scene.Add(new Sphere(new Vector3(0, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
-
-            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0, Texture = texture3 } });
-            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0, Texture = texture3 } });
-
-
-            Scene.Add(new Sphere(new Vector3(0, 0, -20), 5) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture2 } });
+            return;
         }
 
         public override void Trace(Surface screen, int threadId, int numthreads)
@@ -100,7 +85,6 @@ namespace template
             Vector3 reflectColor = new Vector3();
             Vector3 refractColor = new Vector3();
 
-
             if (recursionDepth > 10)
                 return new Vector3();
             Intersection nearest = new Intersection { length = float.PositiveInfinity };
@@ -112,9 +96,8 @@ namespace template
                     nearest = intersection;
             }
 
-            //TODO add skybox here
             if (nearest.primitive == null)
-                return new Vector3();
+                return Skybox(ray);
 
             var illumination = new Vector3();
 
@@ -167,7 +150,10 @@ namespace template
             }
 
             if (nearest.primitive.Material.Texture != null)
+            {
+                nearest.primitive.GetTexture(nearest);
                 return nearest.IntersectionColor * (1 - nearest.primitive.Material.Reflectivity) * illumination + reflectColor + refractColor; ;
+            }
             return nearest.primitive.Material.color * (1 - nearest.primitive.Material.Reflectivity) * illumination + reflectColor + refractColor;
         }
 
@@ -185,21 +171,20 @@ namespace template
         
         private Vector3 Skybox(Ray ray)
         {
-            // flipping the image
-            Vector3 d = -ray.direction;
-            float r = (float)((1d / Math.PI) * Math.Acos(d.Z) / Math.Sqrt(d.X * d.X + d.Y * d.Y));
-            // find the coordinates
-            float u = r * d.X + 1;
-            float v = r * d.Y + 1;
-            // scale the coordinates to image size
-            int iu = (int)(u * Skydome.Texture.Image.GetLength(0) / 2);
-            int iv = (int)(v * Skydome.Texture.Image.GetLength(1) / 2);
-            // fail safe to make sure we're inside of the image coordinates
+            // sphere texturing, adapted from http://www.pauldebevec.com/Probes/
+            var direction = -ray.direction;
+            float r = (float)(1d / Math.PI * Math.Acos(direction.Z) / Math.Sqrt(direction.X * direction.X + direction.Y * direction.Y));
+            
+            float x = r * direction.X + 1;
+            float y = r * direction.Y + 1;
+            
+            int iu = (int)(x * Skydome.Texture.Image.GetLength(0) / 2);
+            int iv = (int)(y * Skydome.Texture.Image.GetLength(1) / 2);
+            
             if (iu >= Skydome.Texture.Image.GetLength(0) || iu < 0)
                 iu = 0;
             if (iv >= Skydome.Texture.Image.GetLength(1) || iv < 0)
                 iv = 0;
-            // return the color
             return Skydome.Texture.Image[iu, iv];
         }
     }

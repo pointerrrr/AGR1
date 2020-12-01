@@ -26,7 +26,7 @@ namespace template
             Height = height;
             Width = width;
             AspectRatio = width / ((float)height);
-            Camera = new Camera(new Vector3(), new Vector3(0, 0, -1), AspectRatio);
+            Camera = new Camera(new Vector3(), new Vector3(0, 0, -1), AspectRatio, FOV);
             Skydome = new Skybox("../../assets/skydome.png");
             result = new int[Width, Height];
         }

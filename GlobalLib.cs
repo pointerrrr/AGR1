@@ -10,10 +10,12 @@ namespace template
 {
     public static class GlobalLib
     {
-        public static float Epsilon = 0.000001f;
+        public static float Epsilon = 0.00001f;
         public static int MaxRecursion = 10;
-        public static int SamplesPerFrame = 1;
-        public static int AA = 1;
+        public static int SamplesPerFrame = 5;
+        public static int AA = 4;
+        public static float FOV = 120;
+        public static int Width = 512, Height = 512;
 
         public static Vector3 ReflectRay(Vector3 rayDirection, Vector3 normal)
         {

@@ -28,22 +28,13 @@ namespace template
             var texture1 = new Texture("../../assets/checkers.png");
             var texture2 = new Texture("../../assets/globe.jpg");
             var texture3 = new Texture("../../assets/triangle.jpg");
-            /*Scene.Add(new Sphere(new Vector3(3, 0, -10), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 1f, Albedo = new Vector3(0f, 0f, 1f) } });
-            Scene.Add(new Sphere(new Vector3(-3, 0, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f, Albedo = new Vector3(0f, 01f, 0f) } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f, Albedo = new Vector3(1f, 0f, 0f), RefractionIndex = 1.5f } });
-
-            Scene.Add(new Sphere(new Vector3(0, 5, -10), 5) { Material = new Material { Emittance = new Vector3(50, 50, 50), Albedo = new Vector3(0.5f, 0.5f, 0.5f), IsLight = true } });
-
-            Scene.Add(new Plane(new Vector3(0, -20, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Albedo = new Vector3(1, 1, 1) } });*/
 
             Scene.Add(new Sphere(new Vector3(3, -2, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
             Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
 
-
             Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture1 } });
 
-            //Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(100, 100, 100)));
             Scene.Add(new Sphere(new Vector3(0, 0, 5), 3) { Material = new Material { Emittance = new Vector3(100, 100, 100), IsLight = true } } );
 
             Scene.Add(new Sphere(new Vector3(-5, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
@@ -54,6 +45,8 @@ namespace template
             Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Texture = texture3 } });
 
             Scene.Add(new Sphere(new Vector3(0, 0, -20), 5) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture2 } });
+
+            Scene.Add(new Sphere(new Vector3(0, 0, -30), 3) { Material = new Material { Emittance = new Vector3(50, 100, 50), IsLight = true } });
         }
 
         public override void Trace(Surface screen, int threadId, int numthreads)
@@ -98,8 +91,6 @@ namespace template
 
                         }   
                     }
-
-                    //resultRaw[x, y] = resultRaw[x,y] / (SamplesTaken - SamplesPerFrame) + aaResult / (SamplesPerFrame * AA);
 
                     resultRaw[x, y] += aaResult;
                     result[x, y] = VecToInt(resultRaw[x, y]/(SamplesTaken * AA));
@@ -183,15 +174,16 @@ namespace template
             Vector3 BRDF;
 
             if (nearest.primitive.Material.Texture != null)
+            {
+                nearest.primitive.GetTexture(nearest);
                 BRDF = nearest.IntersectionColor / (float)Math.PI;
+            }
             else
                 BRDF = nearest.primitive.Material.color / (float)Math.PI;
 
             Vector3 incoming = TraceRay(newRay, threadId, ++recursionDepth);
 
             return (BRDF * incoming * cos_theta / p);
-
-            //return (float)Math.PI * 2f * BRDF + Ei;
         }
 
         protected Vector3 Reflect(Ray ray, Intersection intersection, int threadId, int recursionDepth)
@@ -204,23 +196,6 @@ namespace template
         // adapted from https://www.gamedev.net/forums/topic/683176-finding-a-random-point-on-a-sphere-with-spread-and-direction/5315747/
         Vector3 DiffuseReflection(Vector3 Normal, int threadId)
         {
-            /*
-            var Random = new Random();
-            float z = (float)Random.NextDouble();
-            float theta = (float)( Random.NextDouble() * Math.PI * 2 - Math.PI);
-
-            float x = (float) Math.Cos(theta);
-            float y = (float) Math.Sin(theta);
-
-            Vector3 result = new Vector3(x, y, z);
-
-            Matrix4 rotation = Matrix4.CreateRotationX(Normal.X);
-            rotation *= Matrix4.CreateRotationY(Normal.Y);
-            rotation *= Matrix4.CreateRotationZ(Normal.Z);
-
-            return Normalize(Transform(result, rotation));
-            */
-
             Vector3 b3 = Normalize(Normal);
             Vector3 different = Math.Abs(b3.X) < 0.5f ? new Vector3(1, 0, 0) : new Vector3(0, 1, 0);
 
@@ -236,26 +211,6 @@ namespace template
             double y = r * Math.Sin(theta);
 
             return Normalize((float)x * b1 + (float)y * b2 + (float)z * b3);
-        }
-
-        private Vector3 Skybox(Ray ray)
-        {
-            // flipping the image
-            Vector3 d = -ray.direction;
-            float r = (float)((1d / Math.PI) * Math.Acos(d.Z) / Math.Sqrt(d.X * d.X + d.Y * d.Y));
-            // find the coordinates
-            float u = r * d.X + 1;
-            float v = r * d.Y + 1;
-            // scale the coordinates to image size
-            int iu = (int)(u * Skydome.Texture.Image.GetLength(0) / 2);
-            int iv = (int)(v * Skydome.Texture.Image.GetLength(1) / 2);
-            // fail safe to make sure we're inside of the image coordinates
-            if (iu >= Skydome.Texture.Image.GetLength(0) || iu < 0)
-                iu = 0;
-            if (iv >= Skydome.Texture.Image.GetLength(1) || iv < 0)
-                iv = 0;
-            // return the color
-            return Skydome.Texture.Image[iu, iv];
         }
     }
 

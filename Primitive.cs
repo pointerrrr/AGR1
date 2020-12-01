@@ -16,6 +16,7 @@ namespace template
         public Material Material;
 
         public abstract Intersection Intersect(Ray ray);
+        public abstract void GetTexture(Intersection intersection);
     }
 
     public class Sphere : Primitive
@@ -69,28 +70,28 @@ namespace template
                 intersection.Position = intersection.length * ray.direction + ray.position;
                 intersection.normal = Normalize(intersection.Position - Position);
                 
-                if(Material.Texture != null)
-                {
-                    // sphere texturing, adapted from http://www.pauldebevec.com/Probes/
-                    var direction = Normalize(Position - intersection.Position);
-                    float r = (float)(1d / Math.PI * Math.Acos(direction.Z) / Math.Sqrt(direction.X * direction.X + direction.Y * direction.Y));
-                    // finding the coordinates
-                    float x = r * direction.X + 1;
-                    float y = r * direction.Y + 1;
-                    // scaling the coordinates to image size
-                    int iu = (int)(x * Material.Texture.Image.GetLength(0) / 2);
-                    int iv = (int)(y * Material.Texture.Image.GetLength(1) / 2);
-                    // fail-safe to make sure the returned value is always within the image
-                    if (iu >= Material.Texture.Image.GetLength(0) || iu < 0)
-                        iu = 0;
-                    if (iv >= Material.Texture.Image.GetLength(1) || iv < 0)
-                        iv = 0;
-                    intersection.IntersectionColor = Material.Texture.Image[iu, iv];
-                }
-
                 return intersection;
             }
             return null;            
+        }
+
+        public override void GetTexture(Intersection intersection)
+        {
+            // sphere texturing, adapted from http://www.pauldebevec.com/Probes/
+            var direction = Normalize(Position - intersection.Position);
+            float r = (float)(1d / Math.PI * Math.Acos(direction.Z) / Math.Sqrt(direction.X * direction.X + direction.Y * direction.Y));
+            // finding the coordinates
+            float x = r * direction.X + 1;
+            float y = r * direction.Y + 1;
+            // scaling the coordinates to image size
+            int iu = (int)(x * Material.Texture.Image.GetLength(0) / 2);
+            int iv = (int)(y * Material.Texture.Image.GetLength(1) / 2);
+            // fail-safe to make sure the returned value is always within the image
+            if (iu >= Material.Texture.Image.GetLength(0) || iu < 0)
+                iu = 0;
+            if (iv >= Material.Texture.Image.GetLength(1) || iv < 0)
+                iv = 0;
+            intersection.IntersectionColor = Material.Texture.Image[iu, iv];
         }
     }
 
@@ -121,29 +122,29 @@ namespace template
             intersection.normal = par > 0 ? -Normal : Normal;
             intersection.Position = ray.position + ray.direction * intersection.length + Normal * 0.001f;
 
-            if(Material.Texture != null)
-            {
-                // tilt the plane for easy texture coordinate calculation
-                Vector3 temp = intersection.Position - intersection.normal * intersection.Position.Y;
-                float x, y;
-                x = (temp.X + 10000) % 1;
-                y = (temp.Z + 10000) % 1;
-                if (x >= 1 || x < 0)
-                    x = 0;
-                if (y >= 1 || y < 0)
-                    y = 0;
-
-                intersection.IntersectionColor = Material.Texture.Image[(int)(Material.Texture.Image.GetLength(0) * x), (int)(Material.Texture.Image.GetLength(1) * y)];
-            }
-
             return intersection;
+        }
+
+        public override void GetTexture(Intersection intersection)
+        {
+            // tilt the plane for easy texture coordinate calculation
+            Vector3 temp = intersection.Position - intersection.normal * intersection.Position.Y;
+            float x, y;
+            x = (temp.X + 10000) % 1;
+            y = (temp.Z + 10000) % 1;
+            if (x >= 1 || x < 0)
+                x = 0;
+            if (y >= 1 || y < 0)
+                y = 0;
+
+            intersection.IntersectionColor = Material.Texture.Image[(int)(Material.Texture.Image.GetLength(0) * x), (int)(Material.Texture.Image.GetLength(1) * y)];
         }
     }
 
     // adapted from https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
     public class Vertex : Primitive
     {
-        public Vector3 Point1, Point2, Point3, Normal, Tex1, Tex2, Tex3;
+        public Vector3 Point1, Point2, Point3, Normal, Tex1 = new Vector3(0, 0, 0), Tex2 = new Vector3 (0.5f, 1, 0), Tex3 = new Vector3(1, 0, 0);
 
         public Vertex(Vector3 p1, Vector3 p2, Vector3 p3)
         {
@@ -207,21 +208,24 @@ namespace template
 
             if (Material.Texture != null)
             {
-                var barycentric = getBarycentricCoordinatesAt(intersection.Position);
-
-                // adapted from https://computergraphics.stackexchange.com/questions/1866/how-to-map-square-texture-to-triangle
-
-                var texturelocation = barycentric.X * Tex1 + barycentric.Y * Tex2 + barycentric.Z * Tex3;
-
-                float x = Math.Abs(texturelocation.X % 1);
-                float y = Math.Abs( texturelocation.Y % 1);
-
-
-
-                intersection.IntersectionColor = Material.Texture.Image[(int)(Material.Texture.Image.GetLength(0) * x), (int)(Material.Texture.Image.GetLength(1) * y)];
+                
             }
 
             return intersection;
+        }
+
+        public override void GetTexture(Intersection intersection)
+        {
+            var barycentric = getBarycentricCoordinatesAt(intersection.Position);
+
+            // adapted from https://computergraphics.stackexchange.com/questions/1866/how-to-map-square-texture-to-triangle
+
+            var texturelocation = barycentric.X * Tex1 + barycentric.Y * Tex2 + barycentric.Z * Tex3;
+
+            float x = Math.Abs(texturelocation.X % 1);
+            float y = Math.Abs(texturelocation.Y % 1);
+
+            intersection.IntersectionColor = Material.Texture.Image[(int)(Material.Texture.Image.GetLength(0) * x), (int)(Material.Texture.Image.GetLength(1) * y)];
         }
 
         // adapted from https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
@@ -240,17 +244,6 @@ namespace template
 
             return bary;
         }
-}
-
-    public class Torus : Primitive
-    {
-        public float Radius, Thickness;
-
-        public override Intersection Intersect(Ray ray)
-        {
-            
-            throw new NotImplementedException();
-        }
     }
 
     public class Material
@@ -260,7 +253,6 @@ namespace template
         public bool IsLight;
         public float Reflectivity;
         public float RefractionIndex;
-        public Vector3 Albedo;
 
         public Texture Texture = null;
     }
