@@ -29,5 +29,37 @@ namespace template
             int B = vector.Z > 1 ? 255 : (int)(vector.Z * 255);
             return (R << 16) + (G << 8) + B;
         }
+
+        public static (Vector3, Vector3) GetBoundingVolume(List<Primitive> primitives)
+        {
+            float minX = float.PositiveInfinity;
+            float maxX = float.NegativeInfinity;
+            float minY = float.PositiveInfinity;
+            float maxY = float.NegativeInfinity;
+            float minZ = float.PositiveInfinity;
+            float maxZ = float.NegativeInfinity;
+
+            for (int i = 0; i < primitives.Count; i++)
+            {
+                (var bbMin, var bbMax) = primitives[i].BoundingBox;
+
+                if (bbMin.X < minX)
+                    minX = bbMin.X;
+                if (bbMax.X > maxX)
+                    maxX = bbMax.X;
+                if (bbMin.Y < minY)
+                    minY = bbMin.Y;
+                if (bbMax.Y > maxY)
+                    maxY = bbMax.Y;
+                if (bbMin.Z < minZ)
+                    minZ = bbMin.Z;
+                if (bbMax.Z > maxZ)
+                    maxZ = bbMax.Z;
+            }
+
+            return (new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
+        }
     }
+
+    
 }

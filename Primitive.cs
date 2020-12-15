@@ -15,8 +15,14 @@ namespace template
     {
         public Material Material;
 
+        public (Vector3, Vector3) BoundingBox;
+
+        public Vector3 Centroid;
+
         public abstract Intersection Intersect(Ray ray);
         public abstract void GetTexture(Intersection intersection);
+
+        
     }
 
     public class Sphere : Primitive
@@ -30,6 +36,11 @@ namespace template
             Position = position;
             Radius = radius;
             Radius2 = radius * radius;
+
+            BoundingBox = (new Vector3(Position.X - radius, Position.Y - radius, Position.Z - radius),
+                new Vector3(Position.X + radius, Position.Y + radius, Position.Z + radius));
+
+            Centroid = Position;
         }
 
         public override Intersection Intersect(Ray ray)
@@ -104,6 +115,8 @@ namespace template
         {
             Position = position;
             Normal = normal;
+
+            BoundingBox = (new Vector3(float.PositiveInfinity), new Vector3(float.NegativeInfinity));
         }
 
         public override Intersection Intersect(Ray ray)
@@ -153,6 +166,13 @@ namespace template
             Point3 = p3;
 
             Normal = Normalize( Cross(p2 - p1, p3 - p1));
+
+            var minBB = new Vector3(Math.Min(Math.Min(p1.X, p2.X), p3.X), Math.Min(Math.Min(p1.Y, p2.Y), p3.Y), Math.Min(Math.Min(p1.Z, p2.Z), p3.Z));
+            var maxBB = new Vector3(Math.Max(Math.Max(p1.X, p2.X), p3.X), Math.Max(Math.Max(p1.Y, p2.Y), p3.Y), Math.Max(Math.Max(p1.Z, p2.Z), p3.Z));
+
+            BoundingBox = (minBB, maxBB);
+
+            Centroid = new Vector3((p1.X + p2.X + p3.X) / 3f, (p1.Y + p2.Y + p3.Y) / 3f, (p1.Z + p2.Z + p3.Z) / 3f);
         }
 
         public Vertex(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 t1, Vector3 t2, Vector3 t3)
@@ -161,11 +181,18 @@ namespace template
             Point2 = p2;
             Point3 = p3;
 
+            Normal = Normalize(Cross(p2 - p1, p3 - p1));
+
             Tex1 = t1;
             Tex2 = t2;
             Tex3 = t3;
 
-            Normal = Normalize(Cross(p2 - p1, p3 - p1));
+            var minBB = new Vector3(Math.Min(Math.Min(p1.X, p2.X), p3.X), Math.Min(Math.Min(p1.Y, p2.Y), p3.Y), Math.Min(Math.Min(p1.Z, p2.Z), p3.Z));
+            var maxBB = new Vector3(Math.Max(Math.Max(p1.X, p2.X), p3.X), Math.Max(Math.Max(p1.Y, p2.Y), p3.Y), Math.Max(Math.Max(p1.Z, p2.Z), p3.Z));
+
+            BoundingBox = (minBB, maxBB);
+
+            Centroid = new Vector3((p1.X + p2.X + p3.X) / 3f, (p1.Y + p2.Y + p3.Y) / 3f, (p1.Z + p2.Z + p3.Z) / 3f);
         }
 
         public override Intersection Intersect(Ray ray)

@@ -27,16 +27,17 @@ namespace template
             Lights.Add(new Light(new Vector3(1, 6, -1), new Vector3(50, 25, 25)));
 
             // texture taken from https://mossandfog.com/expand-your-mind-with-these-intricate-fractals/
-            Scene.AddRange(ReadObj(objFile1, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/fractal.jpg")));
+            var obj1 = ReadObj(objFile1, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/fractal.jpg"));
             // texture taken from https://www.clay-and-paint.com/en/texture-plates/30-cernit-texture-plates.html
-            Scene.AddRange(ReadObj(objFile2, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/square.jpg")));
+            var obj2 = ReadObj(objFile2, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/square.jpg"));
+
+            Scene.AddRange(obj1);
+            Scene.AddRange(obj2);
 
             Scene.Add(new Vertex(new Vector3(-3, 3, -8), new Vector3(-3, -3, -8), new Vector3(3, 3, -8)) { Material = new Material { Reflectivity = 1, color = new Vector3(1, 1, 1) } });
             Scene.Add(new Vertex(new Vector3(3, -3, -8), new Vector3(3, 3, -8), new Vector3(-3, 3, -8)) { Material = new Material { Reflectivity = 1, color = new Vector3(1, 1, 1) } });
 
             Scene.Add(new Sphere(new Vector3(-3, 2, 5), 1.3f) { Material = new Material { color = new Vector3(0.4f, 0.3f, 0.3f), RefractionIndex = 1.453f } });
-            
-            return;
         }
 
         public override void Trace(Surface screen, int threadId, int numthreads)
