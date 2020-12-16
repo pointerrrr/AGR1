@@ -12,7 +12,7 @@ namespace template
     public class BVH : Primitive
     {
         public bool IsLeafNode = false;
-        public static int BinCount = 10, MaxSplitDepth = 5;
+        public static int BinCount = 16, MaxSplitDepth = 16;
         public int CurrentSplitDepth = 0;
         public float SplitCost = float.PositiveInfinity;
         //public (Vector3, Vector3) BoundingVolume;
@@ -88,7 +88,7 @@ namespace template
                 else
                 {
                     var left = Left.IntersectSubNode(ray);
-                    if (left.length < intersectionRight.length)
+                    if (left != null && left.length < intersectionRight.length)
                         return left;
                     return intersectionRight;
                 }
@@ -102,7 +102,7 @@ namespace template
                 else
                 {
                     var right = Right.IntersectSubNode(ray);
-                    if (right.length < intersectionLeft.length)
+                    if (right != null && right.length < intersectionLeft.length)
                         return right;
                     return intersectionLeft;
                 }
@@ -140,20 +140,27 @@ namespace template
 
             float distance = 0;
             float start = 0;
-
+            float bestFurthestLeft = float.PositiveInfinity;
+            float bestFurthestRight = float.NegativeInfinity;
             switch (plane)
             {
                 case SplitPlane.X:
                     distance = xDist;
                     start = bbMin.X;
+                    bestFurthestLeft = bbMin.X;
+                    bestFurthestRight = bbMax.X;
                     break;
                 case SplitPlane.Y:
                     distance = yDist;
                     start = bbMin.Y;
+                    bestFurthestLeft = bbMin.Y;
+                    bestFurthestRight = bbMax.Y;
                     break;
                 case SplitPlane.Z:
                     distance = zDist;
                     start = bbMin.Z;
+                    bestFurthestLeft = bbMin.Z;
+                    bestFurthestRight = bbMax.Z;
                     break;
             }
 
@@ -163,8 +170,7 @@ namespace template
             float bestSplitCost = float.PositiveInfinity;
             float bestCostLeft = float.PositiveInfinity;
             float bestCostRight = float.PositiveInfinity;
-            float bestFurthestLeft = float.PositiveInfinity;
-            float bestFurthestRight = float.NegativeInfinity;
+            
             (Vector3, Vector3) boundingLeft = (new Vector3(), new Vector3()), boundingRight = (new Vector3(), new Vector3());
             List<Primitive> bestLeft = null;
             List<Primitive> bestRight = null;
@@ -173,8 +179,8 @@ namespace template
 
             for (int i = 0; i < BinCount; i++)
             {
-                float furthestLeft = float.PositiveInfinity;
-                float furthestRight = float.NegativeInfinity;
+                float furthestLeft = start + binSize * i + binSize / 2f;
+                float furthestRight = start + binSize * i + binSize / 2f;
                 List<Primitive> left = new List<Primitive>();
                 List<Primitive> right = new List<Primitive>();
 
