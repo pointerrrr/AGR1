@@ -63,57 +63,15 @@ namespace template
         public static bool IntersectAABB((Vector3 min, Vector3 max) volume, Ray ray)
         {
             (var min, var max) = volume;
-            float tmin = (min.X - ray.position.X) / ray.direction.X;
-            float tmax = (max.X - ray.position.X) / ray.direction.X;
-
-            if (tmin > tmax)
-            {
-                var temp1 = tmin;
-                tmin = tmax;
-                tmax = temp1;
-            }
-
-            float tymin = (min.Y - ray.position.Y) / ray.direction.Y;
-            float tymax = (max.Y - ray.position.Y) / ray.direction.Y;
-
-            if (tymin > tymax)
-            {
-                var temp2 = tymin;
-                tymin = tymax;
-                tymax = temp2;
-            }
-
-            if ((tmin > tymax) || (tymin > tmax))
-                return false;
-
-            if (tymin > tmin)
-                tmin = tymin;
-
-            if (tymax < tmax)
-                tmax = tymax;
-
-            float tzmin = (min.Z - ray.position.Z) / ray.direction.Z;
-            float tzmax = (max.Z - ray.position.Z) / ray.direction.Z;
-
-            if (tzmin > tzmax)
-            {
-                var temp3 = tzmin;
-                tzmin = tzmax;
-                tzmax = temp3;
-            }
-
-            if ((tmin > tzmax) || (tzmin > tmax))
-                return false;
-
-            if (tzmin > tmin)
-                tmin = tzmin;
-
-            if (tzmax < tmax)
-                tmax = tzmax;
-
-            //var temp = new Vector3(tmin - ray.position.X, tymin - ray.position.Y, tzmin - ray.position.Z);
-            //var res = new Intersection { length = temp.Length };
-            return true;
+            float tx1 = (min.X - ray.position.X) / ray.direction.X;
+            float tx2 = (max.X - ray.position.X) / ray.direction.X;
+            float tmin = Math.Min(tx1, tx2);
+            float tmax = Math.Max(tx1, tx2);
+            float ty1 = (min.Y - ray.position.Y) / ray.direction.Y;
+            float ty2 = (max.Y - ray.position.Y) / ray.direction.Y;
+            tmin = Math.Max(tmin, Math.Min(ty1, ty2));
+            tmax = Math.Min(tmax, Math.Max(ty1, ty2));
+            return tmax >= tmin;
         }
 
 
