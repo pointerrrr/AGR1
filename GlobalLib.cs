@@ -59,6 +59,40 @@ namespace template
 
             return (new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
         }
+
+        public static Intersection IntersectAABB((Vector3 min, Vector3 max) volume, Ray ray)
+        {
+            (var min, var max) = volume;
+            var tMin = (min - ray.position) * ray.direction;
+            var tMax = (max - ray.position) * ray.direction;
+
+            var t1 = Min(tMin, tMax);
+            var t2 = Max(tMin, tMax);
+
+            float tNear = Math.Max(Math.Max(t1.X, t1.Y), t1.Z);
+            float tFar = Math.Min(Math.Min(t2.X, t2.Y), t2.Z);
+
+            if ((tFar > tNear) && (tNear > 0))
+            {
+                var res = new Intersection { length = tNear };
+                return res;
+            }
+            else
+                return null;
+        }
+
+
+        /*
+         * bool CheckBox( vec3& bmin, vec3& bmax, vec3 O, vec3 rD, float t )
+            {
+                vec3 tMin = (bmin - O) * rD, tMax = (bmax - O) * rD;
+                vec3 t1 = min( tMin, tMax ), t2 = max( tMin, tMax );
+                float tNear = max( max( t1.x, t1.y ), t1.z );
+                float tFar = min( min( t2.x, t2.y ), t2.z );
+                return ((tFar > tNear) && (tNear < t) && (tNear > 0));
+            }
+        */
+
     }
 
     
