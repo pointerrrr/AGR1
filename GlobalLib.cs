@@ -60,6 +60,7 @@ namespace template
             return (new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
         }
 
+        // adapted from http://www.cs.uu.nl/docs/vakken/gr/2016/slides/lecture6%20-%20boxes.pdf
         public static bool IntersectAABB((Vector3 min, Vector3 max) volume, Ray ray)
         {
             (var min, var max) = volume;
@@ -71,21 +72,12 @@ namespace template
             float ty2 = (max.Y - ray.position.Y) / ray.direction.Y;
             tmin = Math.Max(tmin, Math.Min(ty1, ty2));
             tmax = Math.Min(tmax, Math.Max(ty1, ty2));
+            float tz1 = (min.Z - ray.position.Z) / ray.direction.Z;
+            float tz2 = (max.Z - ray.position.Z) / ray.direction.Z;
+            tmin = Math.Max(tmin, Math.Min(tz1, tz2));
+            tmax = Math.Min(tmax, Math.Max(tz1, tz2));
             return tmax >= tmin;
         }
-
-
-        /*
-         * bool CheckBox( vec3& bmin, vec3& bmax, vec3 O, vec3 rD, float t )
-            {
-                vec3 tMin = (bmin - O) * rD, tMax = (bmax - O) * rD;
-                vec3 t1 = min( tMin, tMax ), t2 = max( tMin, tMax );
-                float tNear = max( max( t1.x, t1.y ), t1.z );
-                float tFar = min( min( t2.x, t2.y ), t2.z );
-                return ((tFar > tNear) && (tNear < t) && (tNear > 0));
-            }
-        */
-
     }
 
     

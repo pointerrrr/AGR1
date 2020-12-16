@@ -277,6 +277,8 @@ namespace template
                     bestSplit = i;
                     bestCostLeft = costLeft;
                     bestCostRight = costRight;
+                    bestFurthestLeft = furthestLeft;
+                    bestFurthestRight = furthestRight;
                     bestLeft = left;
                     bestRight = right;
                 }
