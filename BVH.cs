@@ -12,7 +12,7 @@ namespace template
     public class BVH : Primitive
     {
         public bool IsLeafNode = false;
-        public static int BinCount = 10, MaxSplitDepth = 10;
+        public static int BinCount = 10, MaxSplitDepth = 5;
         public int CurrentSplitDepth = 0;
         public float SplitCost = float.PositiveInfinity;
         //public (Vector3, Vector3) BoundingVolume;
@@ -73,8 +73,11 @@ namespace template
                 return Left.IntersectSubNode(ray);
 
 
-            var distToleft = (Left.BoundingBox.Item1 - ray.position).Length;
-            var distToRigth = (Right.BoundingBox.Item2 - ray.position).Length;
+            //var distToleft = (Left.BoundingBox.Item1 - ray.position).Length;
+            //var distToRigth = (Right.BoundingBox.Item2 - ray.position).Length;
+
+            var distToleft = Math.Min((Left.BoundingBox.Item1 - ray.position).Length, (Left.BoundingBox.Item2 - ray.position).Length);
+            var distToRigth = Math.Min((Right.BoundingBox.Item1 - ray.position).Length, (Right.BoundingBox.Item2 - ray.position).Length);
 
             if (distToleft > distToRigth)
             {
@@ -83,7 +86,12 @@ namespace template
                 if (intersectionRight == null)
                     return Left.IntersectSubNode(ray);
                 else
+                {
+                    var left = Left.IntersectSubNode(ray);
+                    if (left.length < intersectionRight.length)
+                        return left;
                     return intersectionRight;
+                }
             }
             else
             {
@@ -92,7 +100,12 @@ namespace template
                 if (intersectionLeft == null)
                     return Right.IntersectSubNode(ray);
                 else
+                {
+                    var right = Right.IntersectSubNode(ray);
+                    if (right.length < intersectionLeft.length)
+                        return right;
                     return intersectionLeft;
+                }
             }
         }
 
@@ -150,37 +163,67 @@ namespace template
             float bestSplitCost = float.PositiveInfinity;
             float bestCostLeft = float.PositiveInfinity;
             float bestCostRight = float.PositiveInfinity;
+            float bestFurthestLeft = float.PositiveInfinity;
+            float bestFurthestRight = float.NegativeInfinity;
             (Vector3, Vector3) boundingLeft = (new Vector3(), new Vector3()), boundingRight = (new Vector3(), new Vector3());
             List<Primitive> bestLeft = null;
             List<Primitive> bestRight = null;
+
             
 
             for (int i = 0; i < BinCount; i++)
             {
+                float furthestLeft = float.PositiveInfinity;
+                float furthestRight = float.NegativeInfinity;
                 List<Primitive> left = new List<Primitive>();
                 List<Primitive> right = new List<Primitive>();
 
                 for (int j = 0; j < Primitives.Count; j++)
                 {
+                    var prim = Primitives[j];
                     switch (plane)
                     {
                         case SplitPlane.X:
-                            if (Primitives[j].Centroid.X < start + binSize * i + binSize / 2f)
-                                left.Add(Primitives[j]);
+                            if (prim.Centroid.X < start + binSize * i + binSize / 2f)
+                            {
+                                if (prim.BoundingBox.Item2.X > furthestRight)
+                                    furthestRight = prim.BoundingBox.Item2.X;
+                                left.Add(prim);
+                            }
                             else
-                                right.Add(Primitives[j]);
+                            {
+                                if (prim.BoundingBox.Item1.X < furthestLeft)
+                                    furthestLeft = prim.BoundingBox.Item1.X;
+                                right.Add(prim);
+                            }
                             break;
                         case SplitPlane.Y:
-                            if (Primitives[j].Centroid.Y < start + binSize * i + binSize / 2f)
-                                left.Add(Primitives[j]);
+                            if (prim.Centroid.Y < start + binSize * i + binSize / 2f)
+                            {
+                                if (prim.BoundingBox.Item2.Y > furthestRight)
+                                    furthestRight = prim.BoundingBox.Item2.Y;
+                                left.Add(prim);
+                            }
                             else
-                                right.Add(Primitives[j]);
+                            {
+                                if (prim.BoundingBox.Item1.Y < furthestLeft)
+                                    furthestLeft = prim.BoundingBox.Item1.Y;
+                                right.Add(prim);
+                            }
                             break;
                         case SplitPlane.Z:
-                            if (Primitives[j].Centroid.Z < start + binSize * i + binSize / 2f)
-                                left.Add(Primitives[j]);
+                            if (prim.Centroid.Z < start + binSize * i + binSize / 2f)
+                            {
+                                if (prim.BoundingBox.Item2.Z > furthestRight)
+                                    furthestRight = prim.BoundingBox.Item2.Z;
+                                left.Add(prim);
+                            }
                             else
-                                right.Add(Primitives[j]);
+                            {
+                                if (prim.BoundingBox.Item1.Z < furthestLeft)
+                                    furthestLeft = prim.BoundingBox.Item1.Z;
+                                right.Add(prim);
+                            }
                             break;
                     }
                 }
@@ -197,27 +240,23 @@ namespace template
                 switch (plane)
                 {
                     case SplitPlane.X:
-                        leftXDist = binSize * i + binSize / 2f;
-                        rightXDist = distance - leftXDist;
+                        leftXDist = Math.Abs(furthestRight - bbMin.X);
+                        rightXDist = Math.Abs(bbMax.X - furthestLeft);
                         surfaceAreaLeft = leftXDist * yDist * 2 + leftXDist * zDist * 2 + yDist * zDist * 2;
                         surfaceAreaRight = rightXDist * yDist * 2 + rightXDist * zDist * 2 + yDist * zDist * 2;
                         
                         break;
                     case SplitPlane.Y:
-                        leftYDist = binSize * i + binSize / 2f;
-                        rightYDist = distance - leftYDist;
+                        leftYDist = Math.Abs(furthestRight - bbMin.Y);
+                        rightYDist = Math.Abs(bbMax.Y - furthestLeft);
                         surfaceAreaLeft = xDist * leftYDist * 2 + xDist * zDist * 2 + leftYDist * zDist * 2;
                         surfaceAreaRight = xDist * rightYDist * 2 + xDist * zDist * 2 + rightYDist * zDist * 2;
-                        boundingLeft = (new Vector3(), new Vector3());
-                        boundingRight = (new Vector3(), new Vector3());
                         break;
                     case SplitPlane.Z:
-                        leftZDist = binSize * i + binSize / 2f;
-                        rightZDist = distance - leftZDist;
+                        leftZDist = Math.Abs(furthestRight - bbMin.Z);
+                        rightZDist = Math.Abs(bbMax.Z - furthestLeft);
                         surfaceAreaLeft = xDist * yDist * 2 + xDist * leftZDist * 2 + yDist * leftZDist * 2;
                         surfaceAreaRight = xDist * yDist * 2 + xDist * rightZDist * 2 + yDist * rightZDist * 2;
-                        boundingLeft = (new Vector3(), new Vector3());
-                        boundingRight = (new Vector3(), new Vector3());
                         break;
                 }
 
@@ -244,16 +283,16 @@ namespace template
                 switch(plane)
                 {
                     case SplitPlane.X:
-                        boundingLeft = (new Vector3(bbMin.X, bbMin.Y, bbMin.Z), new Vector3(bbMin.X + binSize * bestSplit + binSize / 2f, bbMax.Y, bbMax.Z));
-                        boundingRight = (new Vector3(bbMin.X + binSize * bestSplit + binSize / 2f, bbMin.Y, bbMin.Z), new Vector3(bbMax.X, bbMax.Y, bbMax.Z));
+                        boundingLeft = (new Vector3(bbMin.X, bbMin.Y, bbMin.Z), new Vector3(bestFurthestRight, bbMax.Y, bbMax.Z));
+                        boundingRight = (new Vector3(bestFurthestLeft, bbMin.Y, bbMin.Z), new Vector3(bbMax.X, bbMax.Y, bbMax.Z));
                         break;
                     case SplitPlane.Y:
-                        boundingLeft = (new Vector3(bbMin.X, bbMin.Y, bbMin.Z), new Vector3(bbMax.X, bbMin.Y + binSize * bestSplit + binSize / 2f, bbMax.Z));
-                        boundingRight = (new Vector3(bbMin.X, bbMin.Y + binSize * bestSplit + binSize / 2f, bbMin.Z), new Vector3(bbMax.X, bbMax.Y, bbMax.Z));
+                        boundingLeft = (new Vector3(bbMin.X, bbMin.Y, bbMin.Z), new Vector3(bbMax.X, bestFurthestRight, bbMax.Z));
+                        boundingRight = (new Vector3(bbMin.X, bestFurthestLeft, bbMin.Z), new Vector3(bbMax.X, bbMax.Y, bbMax.Z));
                         break;
                     case SplitPlane.Z:
-                        boundingLeft = (new Vector3(bbMin.X, bbMin.Y, bbMin.Z), new Vector3(bbMax.X, bbMax.Y, bbMin.Z + binSize * bestSplit + binSize / 2f));
-                        boundingRight = (new Vector3(bbMin.X, bbMin.Y, bbMin.Z + binSize * bestSplit + binSize / 2f), new Vector3(bbMax.X, bbMax.Y, bbMax.Z));
+                        boundingLeft = (new Vector3(bbMin.X, bbMin.Y, bbMin.Z), new Vector3(bbMax.X, bbMax.Y, bestFurthestRight));
+                        boundingRight = (new Vector3(bbMin.X, bbMin.Y, bestFurthestLeft), new Vector3(bbMax.X, bbMax.Y, bbMax.Z));
                         break;
                 }
                 
