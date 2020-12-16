@@ -15,7 +15,7 @@ namespace template
         public static int BinCount = 10, MaxSplitDepth = 10;
         public int CurrentSplitDepth = 0;
         public float SplitCost = float.PositiveInfinity;
-        public (Vector3, Vector3) BoundingVolume;
+        //public (Vector3, Vector3) BoundingVolume;
         public List<Primitive> Primitives;
         public BVH Left, Right;
 
@@ -26,13 +26,13 @@ namespace template
 
         public void Construct()
         {
-            BoundingVolume = GetBoundingVolume(Primitives);
+            BoundingBox = GetBoundingVolume(Primitives);
             subDivide();
         }
 
         public override Intersection Intersect(Ray ray)
         {
-            var intersection = IntersectAABB(BoundingVolume, ray);
+            var intersection = IntersectAABB(BoundingBox, ray);
             if (intersection != null)
             {
                 return IntersectSubNode(ray);
@@ -101,7 +101,7 @@ namespace template
                 IsLeafNode = true;
                 return;
             }
-            (var bbMin, var bbMax) = BoundingVolume;
+            (var bbMin, var bbMax) = BoundingBox;
 
             var xDist = Math.Abs(bbMin.X - bbMax.X);
             var yDist = Math.Abs(bbMin.Y - bbMax.Y);
@@ -253,8 +253,8 @@ namespace template
                 }
                 
 
-                Left = new BVH(bestLeft) { SplitCost = bestCostLeft, BoundingVolume = boundingLeft, CurrentSplitDepth = CurrentSplitDepth + 1 };
-                Right = new BVH(bestRight) { SplitCost = bestCostRight, BoundingVolume = boundingRight, CurrentSplitDepth = CurrentSplitDepth + 1};
+                Left = new BVH(bestLeft) { SplitCost = bestCostLeft, BoundingBox = boundingLeft, CurrentSplitDepth = CurrentSplitDepth + 1 };
+                Right = new BVH(bestRight) { SplitCost = bestCostRight, BoundingBox = boundingRight, CurrentSplitDepth = CurrentSplitDepth + 1};
                 Left.subDivide();
                 Right.subDivide();
             }

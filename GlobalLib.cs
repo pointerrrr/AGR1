@@ -66,8 +66,8 @@ namespace template
             var tMin = (min - ray.position) * ray.direction;
             var tMax = (max - ray.position) * ray.direction;
 
-            var t1 = Min(tMin, tMax);
-            var t2 = Max(tMin, tMax);
+            var t1 = ComponentMin(tMin, tMax);
+            var t2 = ComponentMax(tMin, tMax);
 
             float tNear = Math.Max(Math.Max(t1.X, t1.Y), t1.Z);
             float tFar = Math.Min(Math.Min(t2.X, t2.Y), t2.Z);

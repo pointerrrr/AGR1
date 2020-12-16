@@ -27,12 +27,12 @@ namespace template
             Lights.Add(new Light(new Vector3(1, 6, -1), new Vector3(50, 25, 25)));
 
             // texture taken from https://mossandfog.com/expand-your-mind-with-these-intricate-fractals/
-            var obj1 = ReadObj(objFile1, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/fractal.jpg"));
+            var obj1 = ReadObj(objFile1, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, -15)), new Texture("../../assets/fractal.jpg"));
             // texture taken from https://www.clay-and-paint.com/en/texture-plates/30-cernit-texture-plates.html
-            var obj2 = ReadObj(objFile2, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, -5)), new Texture("../../assets/square.jpg"));
+            var obj2 = ReadObj(objFile2, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/square.jpg"));
 
             var bvh = new BVH(obj1);
-            //bvh.Construct();
+            bvh.Construct();
 
             Scene.Add(bvh);
 
