@@ -60,25 +60,60 @@ namespace template
             return (new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
         }
 
-        public static Intersection IntersectAABB((Vector3 min, Vector3 max) volume, Ray ray)
+        public static bool IntersectAABB((Vector3 min, Vector3 max) volume, Ray ray)
         {
             (var min, var max) = volume;
-            var tMin = (min - ray.position) * ray.direction;
-            var tMax = (max - ray.position) * ray.direction;
+            float tmin = (min.X - ray.position.X) / ray.direction.X;
+            float tmax = (max.X - ray.position.X) / ray.direction.X;
 
-            var t1 = ComponentMin(tMin, tMax);
-            var t2 = ComponentMax(tMin, tMax);
-
-            float tNear = Math.Max(Math.Max(t1.X, t1.Y), t1.Z);
-            float tFar = Math.Min(Math.Min(t2.X, t2.Y), t2.Z);
-
-            if ((tFar > tNear) && (tNear > 0))
+            if (tmin > tmax)
             {
-                var res = new Intersection { length = tNear };
-                return res;
+                var temp1 = tmin;
+                tmin = tmax;
+                tmax = temp1;
             }
-            else
-                return null;
+
+            float tymin = (min.Y - ray.position.Y) / ray.direction.Y;
+            float tymax = (max.Y - ray.position.Y) / ray.direction.Y;
+
+            if (tymin > tymax)
+            {
+                var temp2 = tymin;
+                tymin = tymax;
+                tymax = temp2;
+            }
+
+            if ((tmin > tymax) || (tymin > tmax))
+                return false;
+
+            if (tymin > tmin)
+                tmin = tymin;
+
+            if (tymax < tmax)
+                tmax = tymax;
+
+            float tzmin = (min.Z - ray.position.Z) / ray.direction.Z;
+            float tzmax = (max.Z - ray.position.Z) / ray.direction.Z;
+
+            if (tzmin > tzmax)
+            {
+                var temp3 = tzmin;
+                tzmin = tzmax;
+                tzmax = temp3;
+            }
+
+            if ((tmin > tzmax) || (tzmin > tmax))
+                return false;
+
+            if (tzmin > tmin)
+                tmin = tzmin;
+
+            if (tzmax < tmax)
+                tmax = tzmax;
+
+            //var temp = new Vector3(tmin - ray.position.X, tymin - ray.position.Y, tzmin - ray.position.Z);
+            //var res = new Intersection { length = temp.Length };
+            return true;
         }
 
 

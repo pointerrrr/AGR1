@@ -33,8 +33,9 @@ namespace template
         public override Intersection Intersect(Ray ray)
         {
             var intersection = IntersectAABB(BoundingBox, ray);
-            if (intersection != null)
+            if (intersection)
             {
+                //return new Intersection { primitive = this };
                 return IntersectSubNode(ray);
             }
             else
@@ -62,32 +63,36 @@ namespace template
             var intersectLeft = IntersectAABB(Left.BoundingBox, ray);
             var intersectRight = IntersectAABB(Right.BoundingBox, ray);
 
-            if (intersectLeft == null && intersectRight == null)
+            if (!intersectLeft && !intersectRight )
                 return null;
 
-            if (intersectLeft == null)
+            if (!intersectLeft)
                 return Right.IntersectSubNode(ray);
 
-            if (intersectRight == null)
+            if (!intersectRight)
                 return Left.IntersectSubNode(ray);
 
-            if (intersectLeft.length > intersectRight.length)
-            {
-                intersectRight = Right.IntersectSubNode(ray);
 
-                if (intersectRight == null)
+            var distToleft = (Left.BoundingBox.Item1 - ray.position).Length;
+            var distToRigth = (Right.BoundingBox.Item2 - ray.position).Length;
+
+            if (distToleft > distToRigth)
+            {
+                var intersectionRight = Right.IntersectSubNode(ray);
+
+                if (intersectionRight == null)
                     return Left.IntersectSubNode(ray);
                 else
-                    return intersectRight;
+                    return intersectionRight;
             }
             else
             {
-                intersectLeft = Left.IntersectSubNode(ray);
+                var intersectionLeft = Left.IntersectSubNode(ray);
 
-                if (intersectLeft == null)
+                if (intersectionLeft == null)
                     return Right.IntersectSubNode(ray);
                 else
-                    return intersectLeft;
+                    return intersectionLeft;
             }
         }
 
@@ -96,7 +101,7 @@ namespace template
 
         private void subDivide()
         {
-            if(CurrentSplitDepth > MaxSplitDepth)
+            if(CurrentSplitDepth > MaxSplitDepth || Primitives.Count <= 1)
             {
                 IsLeafNode = true;
                 return;

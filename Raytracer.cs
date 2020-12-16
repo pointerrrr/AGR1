@@ -20,7 +20,7 @@ namespace template
 
         private void MakeScene()
         {
-            var objFile1 = "../../assets/basic_box.obj";
+            var objFile1 = "../../assets/capsule.obj";
             var objFile2 = "../../assets/less_basic_box.obj";
 
             Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(75, 75, 75)));
@@ -104,6 +104,8 @@ namespace template
 
             if (nearest.primitive == null)
                 return Skybox(ray);
+
+            //return new Vector3(1, 1, 1);
 
             var illumination = new Vector3();
 
