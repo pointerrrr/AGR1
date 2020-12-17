@@ -176,8 +176,9 @@ namespace template
 
             for (int i = 0; i < BinCount; i++)
             {
-                float furthestLeft = start + binSize * i + binSize / 2f;
-                float furthestRight = start + binSize * i + binSize / 2f;
+                var middle = start + binSize * i + binSize / 2f;
+                float furthestLeft = middle;
+                float furthestRight = middle;
                 List<Primitive> left = new List<Primitive>();
                 List<Primitive> right = new List<Primitive>();
 
@@ -187,7 +188,7 @@ namespace template
                     switch (plane)
                     {
                         case SplitPlane.X:
-                            if (prim.Centroid.X < start + binSize * i + binSize / 2f)
+                            if (prim.Centroid.X < middle)
                             {
                                 if (prim.BoundingBox.Item2.X > furthestRight)
                                     furthestRight = prim.BoundingBox.Item2.X;
@@ -201,7 +202,7 @@ namespace template
                             }
                             break;
                         case SplitPlane.Y:
-                            if (prim.Centroid.Y < start + binSize * i + binSize / 2f)
+                            if (prim.Centroid.Y < middle)
                             {
                                 if (prim.BoundingBox.Item2.Y > furthestRight)
                                     furthestRight = prim.BoundingBox.Item2.Y;
@@ -215,7 +216,7 @@ namespace template
                             }
                             break;
                         case SplitPlane.Z:
-                            if (prim.Centroid.Z < start + binSize * i + binSize / 2f)
+                            if (prim.Centroid.Z < middle)
                             {
                                 if (prim.BoundingBox.Item2.Z > furthestRight)
                                     furthestRight = prim.BoundingBox.Item2.Z;
