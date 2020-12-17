@@ -1,9 +1,7 @@
-Besides the standard tasks we have also implemented the following:
-•	Support for triangle meshes, using ‘obj’ files to import scenes
-•	Texturing on all supported primitives, where the texture is a generic bitmap
-•	Anti-aliasing
-•	Added a sky dome
-•	Multithreaded everything
+We have implemented a BVH and written an intersection function for it.
+The render time for a ~10.000 triangle mesh improved from ~5 minutes to ~5 seconds on an Intel i7-7700k running at default clock speeds.
+The BVH construction uses the surface area heuristic and binning.
+
 
 Controls:
 •	W,A,S, and D to move the camera
