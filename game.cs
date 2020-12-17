@@ -51,6 +51,10 @@ namespace template {
 
 		public void Trace()
         {
+			var stopwatch = new Stopwatch();
+			Console.WriteLine("Started rendering frame");
+			stopwatch.Start();
+			tracer.SamplesTaken += SamplesPerFrame;
 			for (int i = 0; i < numThreads; i++)
 			{
 				t[i] = new Thread(startTracing);
@@ -63,6 +67,8 @@ namespace template {
 			{
 				t[i].Join();
 			}
+			stopwatch.Stop();
+			Console.WriteLine("Rendered frame in " + stopwatch.Elapsed);
 		}
 
 		public void Draw()
@@ -78,8 +84,6 @@ namespace template {
 
 		private void startTracing(object mt)
         {
-			//raytracer.Trace(screen, (int) mt, numThreads);
-			tracer.SamplesTaken += SamplesPerFrame;
 			tracer.Trace(screen, (int)mt, numThreads);
 		}
 

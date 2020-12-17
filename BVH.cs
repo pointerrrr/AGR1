@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using static template.GlobalLib;
 using OpenTK;
 using static OpenTK.Vector3;
@@ -15,7 +16,6 @@ namespace template
         public static int BinCount = 16, MaxSplitDepth = 16;
         public int CurrentSplitDepth = 0;
         public float SplitCost = float.PositiveInfinity;
-        //public (Vector3, Vector3) BoundingVolume;
         public List<Primitive> Primitives;
         public BVH Left, Right;
 
@@ -28,10 +28,7 @@ namespace template
         {
             var intersection = IntersectAABB(BoundingBox, ray);
             if (intersection)
-            {
-                //return new Intersection { primitive = this };
                 return IntersectSubNode(ray);
-            }
             else
                 return null;
         }
@@ -66,9 +63,6 @@ namespace template
             if (!intersectRight)
                 return Left.IntersectSubNode(ray);
 
-
-            //var distToleft = (Left.BoundingBox.Item1 - ray.position).Length;
-            //var distToRigth = (Right.BoundingBox.Item2 - ray.position).Length;
 
             var distToleft = Math.Min((Left.BoundingBox.Item1 - ray.position).Length, (Left.BoundingBox.Item2 - ray.position).Length);
             var distToRigth = Math.Min((Right.BoundingBox.Item1 - ray.position).Length, (Right.BoundingBox.Item2 - ray.position).Length);
@@ -105,13 +99,19 @@ namespace template
 
         public void Construct()
         {
+            var stopwatch = new Stopwatch();
+            Console.WriteLine("Starting BVH construction with " + Primitives.Count + " primitives");
+            stopwatch.Start();
+            MaxSplitDepth = (int) Math.Ceiling(Math.Log(Primitives.Count, 2));
             BoundingBox = GetBoundingVolume(Primitives);
-            subDivide();
+            SubDivide();
+            stopwatch.Stop();
+            Console.WriteLine("Finished BVH construction in " + stopwatch.Elapsed);
         }
 
-        private void subDivide()
+        private void SubDivide()
         {
-            if(CurrentSplitDepth > MaxSplitDepth || Primitives.Count <= 1)
+            if(CurrentSplitDepth > MaxSplitDepth || Primitives.Count <= 4)
             {
                 IsLeafNode = true;
                 return;
@@ -163,7 +163,6 @@ namespace template
 
             float binSize = distance / BinCount;
 
-            int bestSplit = 0;
             float bestSplitCost = float.PositiveInfinity;
             float bestCostLeft = float.PositiveInfinity;
             float bestCostRight = float.PositiveInfinity;
@@ -171,8 +170,6 @@ namespace template
             (Vector3, Vector3) boundingLeft = (new Vector3(), new Vector3()), boundingRight = (new Vector3(), new Vector3());
             List<Primitive> bestLeft = null;
             List<Primitive> bestRight = null;
-
-            
 
             for (int i = 0; i < BinCount; i++)
             {
@@ -248,7 +245,6 @@ namespace template
                         rightXDist = Math.Abs(bbMax.X - furthestLeft);
                         surfaceAreaLeft = leftXDist * yDist * 2 + leftXDist * zDist * 2 + yDist * zDist * 2;
                         surfaceAreaRight = rightXDist * yDist * 2 + rightXDist * zDist * 2 + yDist * zDist * 2;
-                        
                         break;
                     case SplitPlane.Y:
                         leftYDist = Math.Abs(furthestRight - bbMin.Y);
@@ -272,7 +268,6 @@ namespace template
                 if (cost < bestSplitCost)
                 {
                     bestSplitCost = cost;
-                    bestSplit = i;
                     bestCostLeft = costLeft;
                     bestCostRight = costRight;
                     bestFurthestLeft = furthestLeft;
@@ -282,10 +277,8 @@ namespace template
                 }
             }
 
-            // n primitives > max primitives in node or min cost < leaf cost
             if (bestSplitCost < SplitCost)
             {
-                // TODO
                 switch(plane)
                 {
                     case SplitPlane.X:
@@ -302,11 +295,11 @@ namespace template
                         break;
                 }
                 
-
                 Left = new BVH(bestLeft) { SplitCost = bestCostLeft, BoundingBox = boundingLeft, CurrentSplitDepth = CurrentSplitDepth + 1 };
                 Right = new BVH(bestRight) { SplitCost = bestCostRight, BoundingBox = boundingRight, CurrentSplitDepth = CurrentSplitDepth + 1};
-                Left.subDivide();
-                Right.subDivide();
+
+                Left.SubDivide();
+                Right.SubDivide();
             }
             else
             {

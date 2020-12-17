@@ -77,9 +77,9 @@ namespace template
                             if (par.Length == 4)
                             {
 
-                                int index1 = int.Parse(par[1].Split('/')[0]) - 1;
-                                int index2 = int.Parse(par[2].Split('/')[0]) - 1;
-                                int index3 = int.Parse(par[3].Split('/')[0]) - 1;
+                                int index1 = Math.Abs( int.Parse(par[1].Split('/')[0]) - 1) % vertices.Count;
+                                int index2 = Math.Abs(int.Parse(par[2].Split('/')[0]) - 1) % vertices.Count;
+                                int index3 = Math.Abs(int.Parse(par[3].Split('/')[0]) - 1) % vertices.Count;
                                 int tex1 = int.Parse(par[1].Split('/')[1]) - 1;
                                 int tex2 = int.Parse(par[2].Split('/')[1]) - 1;
                                 int tex3 = int.Parse(par[3].Split('/')[1]) - 1;
@@ -87,7 +87,7 @@ namespace template
                                 if (texture != null)
                                     triangles.Add(new Vertex(vertices[index1], vertices[index2], vertices[index3], textures[tex1], textures[tex2], textures[tex3]) { Material = new Material { color = new Vector3(1, 0, 0), Texture = texture } });
                                 else
-                                    triangles.Add(new Vertex(vertices[index1], vertices[index2], vertices[index3], textures[tex1], textures[tex2], textures[tex3]) { Material = new Material { color = new Vector3(1, 0, 0) } });
+                                    triangles.Add(new Vertex(vertices[index1], vertices[index2], vertices[index3]) { Material = new Material { color = new Vector3(1, 0, 0) } }); //, textures[tex1], textures[tex2], textures[tex3]); );
                             }
                             else
                             {
@@ -107,8 +107,8 @@ namespace template
                                 }
                                 else
                                 {
-                                    triangles.Add(new Vertex(vertices[index1], vertices[index2], vertices[index3], textures[tex1], textures[tex2], textures[tex3]) { Material = new Material { color = new Vector3(1, 0, 0) } });
-                                    triangles.Add(new Vertex(vertices[index3], vertices[index4], vertices[index1], textures[tex3], textures[tex4], textures[tex1]) { Material = new Material { color = new Vector3(1, 0, 0) } });
+                                    triangles.Add(new Vertex(vertices[index1], vertices[index2], vertices[index3]) { Material = new Material { color = new Vector3(1, 0, 0) } });
+                                    triangles.Add(new Vertex(vertices[index3], vertices[index4], vertices[index1]) { Material = new Material { color = new Vector3(1, 0, 0) } });
                                 }
                             }
                             break;

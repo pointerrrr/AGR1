@@ -20,14 +20,14 @@ namespace template
 
         private void MakeScene()
         {
-            var objFile1 = "../../assets/capsule.obj";
+            var objFile1 = "../../assets/buddha.obj";
             var objFile2 = "../../assets/less_basic_box.obj";
 
             Lights.Add(new Light(new Vector3(0, 0, 0), new Vector3(75, 75, 75)));
             Lights.Add(new Light(new Vector3(1, 6, -1), new Vector3(50, 25, 25)));
 
             // texture taken from https://mossandfog.com/expand-your-mind-with-these-intricate-fractals/
-            var obj1 = ReadObj(objFile1, Matrix4.CreateScale(1f) * Matrix4.CreateRotationY((float)Math.PI * 0.5f) * Matrix4.CreateTranslation(new Vector3(0, -1, -2)), new Texture("../../assets/capsule0.jpg"));
+            var obj1 = ReadObj(objFile1, Matrix4.CreateScale(1f) * Matrix4.CreateRotationY((float)Math.PI * 0.5f) * Matrix4.CreateTranslation(new Vector3(0, -1, -2)));//, new Texture("../../assets/capsule0.jpg"));
             // texture taken from https://www.clay-and-paint.com/en/texture-plates/30-cernit-texture-plates.html
             var obj2 = ReadObj(objFile2, Matrix4.CreateScale(0.1f) * Matrix4.CreateTranslation(new Vector3(0, -1, 0)), new Texture("../../assets/square.jpg"));
 
@@ -47,42 +47,36 @@ namespace template
 
         public override void Trace(Surface screen, int threadId, int numthreads)
         {
-            int sqr = (int)Math.Sqrt(numthreads);
-            int fromX = (threadId % sqr) * Width / sqr;
-            int toX = ((threadId % sqr) + 1) * Width / sqr;
-            int fromY = (threadId / sqr) * Height / sqr;
-            int toY = ((threadId / sqr) + 1) * Height / sqr;
-            for (int x = fromX; x < toX; x++)
+            for(int pixel = threadId; pixel < Width * Height; pixel += numthreads)
             {
-                for (int y = fromY; y < toY; y++)
+                int x = pixel % Width;
+                int y = pixel / Height;
+                Vector3 aaResult = new Vector3();
+                float AAsqrt = (float)Math.Sqrt(AA);
+                for (float aax = 0; aax < AAsqrt; aax++)
                 {
-                    Vector3 aaResult = new Vector3();
-                    float AAsqrt = (float)Math.Sqrt(AA);
-                    for (float aax = 0; aax < AAsqrt; aax++)
+                    for (float aay = 0; aay < AAsqrt; aay++)
                     {
-                        for (float aay = 0; aay < AAsqrt; aay++)
-                        {
-                            Ray ray = new Ray();
-                            ray.position = Camera.Position;
+                        Ray ray = new Ray();
+                        ray.position = Camera.Position;
 
-                            Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
-                            Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
-                            Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width * (x + aax * (1f/AAsqrt) - 0.5f) + vertical / Height * (y + aay * ( 1f/AAsqrt) - 0.5f);
+                        Vector3 horizontal = Camera.Screen.TopRigth - Camera.Screen.TopLeft;
+                        Vector3 vertical = Camera.Screen.BottomLeft - Camera.Screen.TopLeft;
+                        Vector3 pixelLocation = Camera.Screen.TopLeft + horizontal / Width * (x + aax * (1f / AAsqrt) - 0.5f) + vertical / Height * (y + aay * (1f / AAsqrt) - 0.5f);
 
-                            Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
-                            rotation *= Matrix4.CreateRotationY(Camera.YRotation);
-                            Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
+                        Matrix4 rotation = Matrix4.CreateRotationX(Camera.XRotation);
+                        rotation *= Matrix4.CreateRotationY(Camera.YRotation);
+                        Matrix4 translation = Matrix4.CreateTranslation(Camera.Position);
 
-                            pixelLocation = Transform(pixelLocation, rotation);
-                            pixelLocation = Transform(pixelLocation, translation);
+                        pixelLocation = Transform(pixelLocation, rotation);
+                        pixelLocation = Transform(pixelLocation, translation);
 
-                            ray.direction = Normalize(pixelLocation - Camera.Position);
-                            aaResult += TraceRay(ray, threadId);
-                        }
+                        ray.direction = Normalize(pixelLocation - Camera.Position);
+                        aaResult += TraceRay(ray, threadId);
                     }
-                    aaResult /= AA;
-                    result[x, y] = VecToInt(aaResult);
                 }
+                aaResult /= AA;
+                result[x, y] = VecToInt(aaResult);
             }
         }
 
@@ -104,8 +98,6 @@ namespace template
 
             if (nearest.primitive == null)
                 return Skybox(ray);
-
-            //return new Vector3(1, 1, 1);
 
             var illumination = new Vector3();
 
@@ -197,8 +189,6 @@ namespace template
         }
     }
 
-    
-
     public class Light
     {
         public Vector3 Color;
@@ -210,10 +200,4 @@ namespace template
             Color = color;
         }
     }
-
-
-    // TODO
-  
-
-    
 }

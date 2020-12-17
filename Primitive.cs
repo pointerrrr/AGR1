@@ -233,11 +233,6 @@ namespace template
             intersection.primitive = this;
             intersection.ray = ray;
 
-            if (Material.Texture != null)
-            {
-                
-            }
-
             return intersection;
         }
 

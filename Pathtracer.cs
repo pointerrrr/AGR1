@@ -29,26 +29,23 @@ namespace template
             var texture2 = new Texture("../../assets/globe.jpg");
             var texture3 = new Texture("../../assets/triangle.jpg");
 
-            /*Scene.Add(new Sphere(new Vector3(3, -2, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
-            Scene.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
+            var bvh = new BVH(new List<Primitive>());
 
-            Scene.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture1 } });
+            bvh.Primitives.Add(new Sphere(new Vector3(3, -2, -10), 1) { Material = new Material { color = new Vector3(1, 0, 0), Reflectivity = 0f } });
+            bvh.Primitives.Add(new Sphere(new Vector3(-3, -2, -10), 1) { Material = new Material { color = new Vector3(0, 1, 0), Reflectivity = 0f } });
+            bvh.Primitives.Add(new Sphere(new Vector3(0, 0, -10), 1) { Material = new Material { color = new Vector3(0, 0, 1), Reflectivity = 0f } });
 
-            Scene.Add(new Sphere(new Vector3(-5, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
+            bvh.Primitives.Add(new Plane(new Vector3(0, -2, -20), new Vector3(0, 1, 0)) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture1 } });
 
-            Scene.Add(new Sphere(new Vector3(5, 0, -5), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 0.5f } });
+            bvh.Primitives.Add(new Sphere(new Vector3(-5, 0, -5), 1) { Material = new Material { color = new Vector3(0f, 0, 0), RefractionIndex = 1.333f } });
 
-            Scene.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Texture = texture3 } });
-            Scene.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Texture = texture3 } });
+            bvh.Primitives.Add(new Sphere(new Vector3(5, 0, -5), 1) { Material = new Material { color = new Vector3(1, 1, 1), Reflectivity = 0.5f } });
 
-            Scene.Add(new Sphere(new Vector3(0, 0, -20), 5) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture2 } });*/
-            var objFile1 = "../../assets/capsule.obj";
-            var obj1 = ReadObj(objFile1, Matrix4.CreateScale(1f) * Matrix4.CreateRotationY((float)Math.PI * 0.5f) * Matrix4.CreateTranslation(new Vector3(0, -1, -2)));//, new Texture("../../assets/fractal.jpg"));
+            bvh.Primitives.Add(new Vertex(new Vector3(-1, 2, -5), new Vector3(1, 2, -5), new Vector3(0, 1, -5)) { Material = new Material { color = new Vector3(1, 0, 0), Texture = texture3 } });
+            bvh.Primitives.Add(new Vertex(new Vector3(-1, 2, 5), new Vector3(1, 2, 5), new Vector3(0, 1, 5)) { Material = new Material { color = new Vector3(1, 0, 0), Texture = texture3 } });
 
-            var bvh = new BVH(obj1);
-
-
+            bvh.Primitives.Add(new Sphere(new Vector3(0, 0, -20), 5) { Material = new Material { color = new Vector3(1, 1, 1), Texture = texture2 } });
+            
             bvh.Primitives.Add(new Sphere(new Vector3(0, 0, 5), 3) { Material = new Material { Emittance = new Vector3(100, 100, 100), IsLight = true } });
             bvh.Primitives.Add(new Sphere(new Vector3(0, 0, -30), 3) { Material = new Material { Emittance = new Vector3(50, 100, 50), IsLight = true } });
 
