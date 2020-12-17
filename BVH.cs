@@ -24,12 +24,6 @@ namespace template
             Primitives = primitives;
         }
 
-        public void Construct()
-        {
-            BoundingBox = GetBoundingVolume(Primitives);
-            subDivide();
-        }
-
         public override Intersection Intersect(Ray ray)
         {
             var intersection = IntersectAABB(BoundingBox, ray);
@@ -109,8 +103,11 @@ namespace template
             }
         }
 
-
-
+        public void Construct()
+        {
+            BoundingBox = GetBoundingVolume(Primitives);
+            subDivide();
+        }
 
         private void subDivide()
         {
